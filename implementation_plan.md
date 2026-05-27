@@ -70,6 +70,16 @@ gantt
 * Create the centralized **Vulnerability & Update Dashboard** in the Main Console.
 * Program the gRPC patching pipeline allowing administrators to push cryptographically signed updates and hotfixes directly from the UI.
 
+### Milestone 1.7: Next.js Glassmorphism central Security Console (Milestone 1.7)
+We will design a high-fidelity, premium Next.js console under `src/module1_core/console`. To achieve a state-of-the-art UI/UX, we will implement:
+1. **Design System & Global Styles**: Custom Vanilla CSS with custom glassmorphism variables (using backdrop filters, tailored HSL color tokens, rich gradients, and smooth scale transitions).
+2. **Main Security Dashboard Dashboard (`/`)**: Displays dynamic SIEM/OTel log ingestion throughput, active alerts count, and container CPU/RAM resource gauges.
+3. **Virtual Entity Exposure Map (`/entities`)**: A visual network topology rendering VM entities. It explicitly maps logs using our unique composite key: `[Hypervisor Type] + [Host VM UUID] + [Application ID]`.
+4. **Autonomous AI & Vulnerability Center (`/vulnerabilities`)**: Exposes Mythos AI reachability ratings (comparing static CVE scores with active exposure status) and visualizes synthesized hotfix patches.
+5. **OTA Patch & Upgrade Control Panel (`/upgrades`)**: Interfaces with the gRPC patch server to trigger signed upgrades, configure canary deployments (1%, 10%, 50%, 100%), and monitor active rollbacks.
+6. **Relational Ticketing & SOAR Case Manager (`/cases`)**: Displays PostgreSQL ACID security cases, evidence canvas pins, and human-in-the-loop approval gates for high-impact containment actions.
+7. **Appliance Self-Auditing & Break-Glass Terminal (`/audit`)**: Renders console audit streams (Next.js web interactions and host `auditd` commands) and features a glowing, high-severity "Break-Glass" recovery trigger.
+
 ### Milestone 4: Autonomous 8-Step AI Agent Workflow
 * Install and host the Local LLM inference server (vLLM/Ollama running Mistral/Llama) inside the air-gapped environment.
 * Implement the core agent loop executing the **8-step investigation workflow** (log polling, identity/UEBA baseline checks, TIP lookup, MITRE mapping, blast radius analysis, and auto-recommendation).
@@ -92,6 +102,7 @@ gantt
 ## 3. Verification Plan
 
 ### Automated Tests
+* **Console UI Integration & Health Checks**: Verify that the Next.js router successfully resolves all core routes (`/`, `/entities`, `/vulnerabilities`, `/upgrades`, `/cases`, `/audit`) and that pages render with valid semantic HTML structures, unique IDs, and proper accessibility parameters.
 * **Vulnerability Scan Verification**: Trigger an automated scan against a mock agent package configuration and verify that vulnerabilities and compliance ratings are correctly identified and populated in the central schema.
 * **Console Patch Execution**: Simulate a patch trigger from the main console API and verify the agent receives, cryptographically validates the dual signatures, applies the update, and reports the new version status.
 * **AI Agent Loop Audit**: Feed simulated endpoint anomalies to the agent and verify it completes steps 1 through 7, producing a detailed blast radius summary and containment recommendation.
