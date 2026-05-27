@@ -1,0 +1,82 @@
+# OpenTelemetry Collector Configuration - Unified SecOps VM Appliance
+# Standardized Ingestion Pipeline for VLAN 100 (vNIC 0) with strict mTLS v1.3
+
+receivers:
+  # OTel gRPC/HTTP Protobuf receiver
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+        tls:
+          cert_file: /etc/secops/certs/ingestion.crt
+          key_file: /etc/secops/certs/ingestion.key
+          client_ca_file: /etc/secops/certs/client_ca.crt
+          min_version: "1.3"
+      http:
+        endpoint: 0.0.0.0:4318
+        tls:
+          cert_file: /etc/secops/certs/ingestion.crt
+          key_file: /etc/secops/certs/ingestion.key
+          client_ca_file: /etc/secops/certs/client_ca.crt
+          min_version: "1.3"
+
+  # Syslog receiver concentrating routers, switches, firewalls logs
+  syslog:
+    tcp:
+      listen_address: 0.0.0.0:54514
+      tls:
+        cert_file: /etc/secops/certs/ingestion.crt
+        key_file: /etc/secops/certs/ingestion.key
+        client_ca_file: /etc/secops/certs/client_ca.crt
+        min_version: "1.3"
+    udp:
+      listen_address: 0.0.0.0:514
+    protocol: rfc5424
+
+processors:
+  # Batch processing optimized for high-throughput ClickHouse ingestion
+  batch:
+    send_batch_size: 8192
+    timeout: 1s
+    send_batch_max_size: 16384
+
+  # Memory limiter to ensure the appliance container stays within the 64GB VM budget
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 80
+    spike_limit_percentage: 20
+
+  # Metadata enrichment processor to tag virtualization context
+  attributes:
+    actions:
+      - key: appliance.ingest_timestamp
+        action: insert
+        value: "now"
+
+exporters:
+  # Columnar ClickHouse exporter with stream routing
+  # Sends normalized protobuf payloads directly to ClickHouse SQL endpoints
+  clickhouse:
+    endpoint: tcp://10.103.0.10:9000
+    database: secops_lakehouse
+    username: ingestion_agent
+    password: ${env:CLICKHOUSE_INGEST_PASSWORD}
+    ttl: 180d
+    connection_timeout: 5s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+
+service:
+  pipelines:
+    logs:
+      receivers: [otlp, syslog]
+      processors: [memory_limiter, attributes, batch]
+      exporters: [clickhouse]
+  
+  telemetry:
+    logs:
+      level: "info"
+    metrics:
+      address: "0.0.0.0:8888"
