@@ -16,7 +16,8 @@ When extracted on a target VM, the installer parses the host role and activates 
 /opt/secops/
 ├── bin/
 │   ├── install.sh                       # Unified master installation and deployment script
-│   └── cert-gen.sh                      # Local PKI utility to generate agent mTLS certificates
+│   ├── cert-gen.sh                      # Local PKI utility to generate agent mTLS certificates
+│   └── test_runner.py                   # Master integration test suite and validation engine
 ├── config/
 │   ├── otel-collector-config.yaml       # Module 1 & 2 OTel collector configuration
 │   ├── clickhouse-keeper.xml            # ClickHouse Keeper clustering configuration
@@ -25,13 +26,28 @@ When extracted on a target VM, the installer parses the host role and activates 
 │   ├── clickhouse-schema.sql            # Columnar security lakehouse schema
 │   └── postgres-schema.sql              # Transactional case management schema
 ├── modules/
-│   ├── module1_core/                    # SIEM, SOAR, UEBA, AI, and Ticketing code assets
-│   ├── module2_agents/                  # Lightweight endpoint agent binaries and configurations
-│   ├── module3_patch/                   # Mythos scanner and dual-signature gRPC server
-│   └── module4_archive/                 # Ceph lifecycle Parquet archival scripts
+│   ├── module1_core/
+│   │   ├── ingestion/
+│   │   │   ├── entity_demux.py          # Virtual Entity Demultiplexing pre-processor
+│   │   │   └── data_mart_manager.py     # Dynamic Data Mart provisioning agent
+│   │   └── soar/
+│   │       └── soar_playbook_engine.py  # SOAR playbook engine with supervisor gates
+│   ├── module2_agents/
+│   │   ├── agent_daemon.py              # Lightweight endpoint telemetry daemon with spooler
+│   │   └── legacy_tel_bridge.py         # Mainframe AS/400 and z/OS bridging adapter
+│   ├── module3_patch/
+│   │   ├── grpc_control_pipeline.py     # Secure gRPC client/server upgrade pipeline
+│   │   └── mythos_vuln_scanner.py       # Mythos-class AI-native reachability scanner
+│   └── module4_archive/
+│       └── parquet_archiver.py          # Parquet lifecycle data tiering archiver
 └── sys/
-    ├── systemd/                         # systemd unit files for all core services
-    └── security/                        # AppArmor / SELinux policy files
+    ├── systemd/
+    │   ├── secops-core.service          # Module 1 systemd service unit
+    │   ├── secops-collector.service     # Module 2 systemd service unit
+    │   ├── secops-patch.service         # Module 3 systemd service unit
+    │   └── secops-archive.service       # Module 4 systemd service unit
+    └── security/
+        └── se_policy.te                 # SELinux type enforcement security policies
 ```
 
 ### 1.2 Master Extraction & Bootstrap Script (`install.sh`)
