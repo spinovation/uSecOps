@@ -102,10 +102,21 @@ We will design a high-fidelity, premium Next.js console under `src/module1_core/
 * Code the "Break-Glass" Emergency Bypass and local write-once log directory blocks, forwarding recovery serial session records directly to Module 4 Ceph cold storage.
 
 
-### Milestone 6: 5-Year Cold Archival & Raw Event Audit Logs
+### Module 4: Data Archive & Cold Storage Server (Milestone 4.1 - 4.4)
 * Write the data tiering daemon to compress active 180-day data into Apache Parquet.
-* Ensure archives capture **both** alerts and all related underlying raw events.
+* Ensure archives capture both alerts and all related underlying raw events.
 * Implement the forensic replay hydration engine to restore historical partitions on demand.
+
+### Milestone 4.4: High-Availability (HA) Setup (Keepalived Virtual IPs & ClickHouse Keeper Clustering)
+We will implement and validate the high-availability clustering and load-balancing configurations to ensure zero telemetry loss during node failure scenarios:
+1. **Keepalived Virtual IP (VIP) Configuration (`config/keepalived.conf`)**:
+   - Configure active-passive VRRP router instances defining Virtual IP `10.100.0.100` (Ingestion VIP) and `10.101.0.100` (Control VIP) with automatic failover prioritization (Priority 101 on Master, 100 on Backup) and health check scripts monitoring OTel daemon status.
+2. **HAProxy mTLS Load Balancing (`config/haproxy.cfg`)**:
+   - Program HAProxy to distribute traffic across redundant OTel receivers on TCP ports 4317 (gRPC) and 4318 (HTTP) using `leastconn` balances and secure pass-through routing to preserve client-side mTLS certificate handshakes.
+3. **ClickHouse Keeper Consensus Logs (`config/clickhouse-keeper.xml`)**:
+   - Establish a 3-node Raft consensus cluster resolving multi-master log replication. 
+4. **HA Failover Simulator (`bin/test_ha_failover.py`)**:
+   - Develop an automated test script simulating master node isolation, VRRP state shifts, ClickHouse consensus partition split-brain recovery, and telemetry pipeline reconnect loops.
 
 ---
 

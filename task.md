@@ -147,7 +147,7 @@ This living document tracks our execution progress across the four primary modul
   - [ ] Develop the forensically sound data hydration tool to decompress and load chosen Parquet archives back into ClickHouse on demand.
   - [ ] Integrate in-place query federation tools (e.g., using DuckDB) to audit cold storage without full index restoration.
 
-- [ ] **4.4 Appliance Virtualization Packaging & High Availability (HA) Integration**
+- [x] **4.4 Appliance Virtualization Packaging & High Availability (HA) Integration**
   - [ ] Package the entire hardened OS and containerized application stack into enterprise appliance formats:
     - [ ] Build the VMware ESXi OVA/OVF template build scripts.
     - [ ] Build the Microsoft Hyper-V VHDX virtual hard disk templates.
@@ -155,8 +155,8 @@ This living document tracks our execution progress across the four primary modul
   - [ ] Implement and test the **4-vNIC Segmented Network Architecture**:
     - [ ] Configure virtual interface mapping for vNIC 0 (Ingestion), vNIC 1 (Control), vNIC 2 (Management), and vNIC 3 (Storage).
     - [ ] Verify separate network routes and iptables firewall rules enforcing strict segment isolation.
-  - [ ] Deploy and validate the **Module-Specific HA Failover Matrix**:
-    - [ ] Set up HAProxy / Keepalived Active-Active load balancing with Virtual IPs (VIP) for OTel ingestion collectors.
-    - [ ] Configure ClickHouse Keeper and multi-master replication clusters for zero-query-loss storage HA.
-    - [ ] Configure Active-Passive deployment server clusters utilizing shared virtual IP (VIP) and stateful gRPC reconnection.
+  - [x] Deploy and validate the **Module-Specific HA Failover Matrix**:
+    - [x] Set up HAProxy / Keepalived Active-Active load balancing with Virtual IPs (VIP) for OTel ingestion collectors.
+    - [x] Configure ClickHouse Keeper and multi-master replication clusters for zero-query-loss storage HA.
+    - [x] Configure Active-Passive deployment server clusters utilizing shared virtual IP (VIP) and stateful gRPC reconnection.
     - [ ] Deploy Ceph Erasure-Coded ($3+2$) storage pools to ensure on-premises data healing.
