@@ -192,3 +192,32 @@ VERIFICATION RESULTS: 6/6 Tests Passed.
 ======================================================================
 Verification Suite: ALL PROTO-ENGINE SYSTEMS STABLE.
 ```
+
+---
+
+## 5. Public Cloud Deployment Model (AWS & Public Clouds)
+
+Although the platform is optimized as a hardened, on-premises private appliance, its modular container architecture allows seamless deployment on public clouds (e.g., **AWS EC2**, **Azure Virtual Machines**, or **Google Compute Engine**).
+
+### 5.1 Cloud Instance Configuration Subscriptions
+Subscribe to the following production VM sizing types (or equivalents):
+*   **Module 1: Core & Lakehouse**: Subscribed to **`m6a.4xlarge`** (AMD EPYC, 16 vCPUs, 64 GB RAM, EBS-backed).
+*   **Module 1: AI Copilot**: Subscribed to **`g6.2xlarge`** (8 vCPUs, 32 GB RAM) mapped with pass-through for **1x NVIDIA L4 GPU** (24 GB GDDR6).
+*   **Module 3: Patch & Deploy**: Subscribed to **`c6a.2xlarge`** (8 vCPUs, 16 GB RAM).
+*   **Module 4: Cold Storage**: Subscribed to standard instance nodes backed by **Amazon S3** with **S3 Object Lock** enabled (replaces Ceph for WORM locks).
+
+### 5.2 Network Segmentation on AWS (VPC Subnets)
+Instead of physical hypervisor vNICs and VLAN configurations, define segmented network interfaces using VPC private subnets and Security Groups:
+1.  **VPC Subnet 1 (Ingestion Zone - replacing VLAN 100)**: Allows inbound agent mTLS telemetry traffic on ports `4317`/`4318` and Concentrated Syslog traffic on port `514`.
+2.  **VPC Subnet 2 (Control Zone - replacing VLAN 101)**: Restricts inbound gRPC control agent traffic to port `50051`.
+3.  **VPC Subnet 3 (Management Zone - replacing VLAN 102)**: Ephemerally permits analyst HTTPS REST traffic on port `443` only from designated corporate subnets.
+4.  **VPC Subnet 4 (Storage Zone - replacing VLAN 103)**: Non-routable subnet dedicated to ClickHouse Keeper database replication.
+
+### 5.3 Step-by-Step AWS Bootstrapping
+1.  **AMI Preparation**: Compile the `/opt/secops/` package directory into an **Amazon Machine Image (AMI)** using HashiCorp Packer or AWS VM Import/Export.
+2.  **Storage Volumes**: Attach high-IOPS EBS volumes (`gp3` or `io2`) for the ClickHouse warm database `/var/lib/clickhouse` partition.
+3.  **Bootstrap Script Run**: Configure your launch template to trigger the installer daemon on startup:
+    ```bash
+    sudo ./bin/install.sh core
+    ```
+
