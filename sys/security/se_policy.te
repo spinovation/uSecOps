@@ -1,0 +1,25 @@
+module secops_policy 1.0;
+
+require {
+    type unconfined_t;
+    type var_lib_t;
+    type var_log_t;
+    type port_t;
+    class file { create read write open getattr unlink rename lock };
+    class dir { create read write open add_name remove_name search };
+    class tcp_socket { listen accept bind name_bind name_connect connect };
+}
+
+# ====================================================================
+# SECURE SELINUX TYPE ENFORCEMENT RULES FOR UNIFIED SECOPS PLATFORM
+# ====================================================================
+
+# 1. Authorize file system access to /var/lib/secops and /var/log/secops
+allow unconfined_t var_lib_t:dir { create read write open add_name remove_name search };
+allow unconfined_t var_lib_t:file { create read write open getattr unlink rename lock };
+allow unconfined_t var_log_t:dir { create read write open add_name remove_name search };
+allow unconfined_t var_log_t:file { create read write open getattr unlink rename };
+
+# 2. Authorize network bindings for OTel and gRPC control channels
+# Allow binding to Port 4317/4318 (OTel), 50051 (gRPC), and 54514 (Syslog)
+allow unconfined_t port_t:tcp_socket { listen accept bind name_bind name_connect connect };

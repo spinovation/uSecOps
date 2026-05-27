@@ -1,0 +1,19 @@
+[Unit]
+Description=Lightweight Telemetry Agent Daemon (Module 2)
+After=network.target
+
+[Service]
+Type=simple
+User=secops
+WorkingDirectory=/opt/secops
+ExecStart=/usr/bin/python3 /opt/secops/modules/module2_agents/agent_daemon.py
+Restart=always
+RestartSec=5
+LimitNOFILE=32768
+
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/secops/data /var/log/secops
+
+[Install]
+WantedBy=multi-user.target

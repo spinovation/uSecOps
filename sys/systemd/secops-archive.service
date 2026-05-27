@@ -1,0 +1,18 @@
+[Unit]
+Description=Lifecycle Cold Storage Archival Daemon (Module 4)
+After=network.target clickhouse-server.service
+
+[Service]
+Type=simple
+User=secops
+WorkingDirectory=/opt/secops
+ExecStart=/usr/bin/python3 /opt/secops/modules/module4_archive/parquet_archiver.py
+Restart=always
+RestartSec=10
+
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/secops/data /var/log/secops
+
+[Install]
+WantedBy=multi-user.target

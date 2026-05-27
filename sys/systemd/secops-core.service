@@ -1,0 +1,22 @@
+[Unit]
+Description=Unified SecOps Platform Core Service (Module 1)
+After=network.target postgresql.service clickhouse-server.service
+Wants=postgresql.service clickhouse-server.service
+
+[Service]
+Type=simple
+User=secops
+WorkingDirectory=/opt/secops
+ExecStart=/usr/bin/python3 /opt/secops/modules/module1_core/ingestion/entity_demux.py
+Restart=always
+RestartSec=5
+LimitNOFILE=65536
+
+# Sandbox Restrictions
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/secops/data /var/log/secops
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

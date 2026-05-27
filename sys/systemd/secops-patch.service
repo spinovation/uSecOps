@@ -1,0 +1,18 @@
+[Unit]
+Description=Patch & Mythos Deployment Control Plane (Module 3)
+After=network.target
+
+[Service]
+Type=simple
+User=secops
+WorkingDirectory=/opt/secops
+ExecStart=/usr/bin/python3 /opt/secops/modules/module3_patch/grpc_control_pipeline.py
+Restart=always
+RestartSec=5
+
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/secops/data /var/log/secops
+
+[Install]
+WantedBy=multi-user.target
