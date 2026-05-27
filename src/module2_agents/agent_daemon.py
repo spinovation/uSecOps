@@ -29,6 +29,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger("TelemetryAgentDaemon")
 
+# Cross-platform Windows Event Log Imports
+try:
+    import win32evtlog
+    import win32evtlogutil
+    import win32security
+    import win32con
+    HAS_WIN32 = True
+except ImportError:
+    HAS_WIN32 = False
+
 class TelemetryAgentDaemon:
     def __init__(self, agent_id: str = None):
         self.agent_id = agent_id or f"AGENT-{socket.gethostname().upper()}-{str(uuid.uuid4())[:8]}"
@@ -212,8 +222,42 @@ class TelemetryAgentDaemon:
         except Exception as e:
             logger.error(f"[Spooler] Failed to flush cache: {e}")
 
+    def _observe_windows_event_log(self):
+        """Reads security event logs from Windows Event Service (API win32evtlog)."""
+        logger.info("[EventLog Observer] Monitoring Windows Security Channel event streams...")
+        server = "localhost"
+        logtype = "Security"
+        
+        try:
+            hand = win32evtlog.OpenEventLog(server, logtype)
+            flags = win32evtlog.EVENTLOG_BACKWARDS_READ | win32evtlog.EVENTLOG_SEQUENTIAL_READ
+            
+            while self.is_running:
+                events = win32evtlog.ReadEventLog(hand, flags, 0)
+                if not events:
+                    time.sleep(1.0)
+                    continue
+                
+                for event in events:
+                    event_id = event.EventID & 0xFFFF
+                    # Map common Event IDs: 4624 (Logon), 4625 (Logon Fail), 4688 (Process Created)
+                    if event_id in [4624, 4625, 4688]:
+                        msg = f"EventID: {event_id} | Channel: Security | Source: {event.SourceName} | Logged: {event.TimeGenerated}"
+                        self.capture_and_send_telemetry("LL01" if event_id == 4624 else "PA01", msg, "WIN_SECURITY_SVC")
+                time.sleep(1.0)
+        except Exception as e:
+            logger.error(f"Error reading Windows Event Logs: {e}")
+
     def _observe_syslog_pipeline(self):
         """Tails the system log file or falls back to simulated events if read denied."""
+        # Check if platform is Windows and win32 API is present
+        if self.os_type == "Windows" and HAS_WIN32:
+            self._observe_windows_event_log()
+            return
+        elif self.os_type == "Windows":
+            logger.warning("[EventLog Observer] Running on Windows but pywin32 bindings are missing. Falling back to active mock event generator...")
+            # Fall through to mock generator
+
         syslog_paths = [
             "/var/log/syslog",      # Linux Ubuntu/Debian standard
             "/var/log/messages",    # Linux RedHat standard
