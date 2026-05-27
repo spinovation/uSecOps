@@ -19,3 +19,6 @@ venv/
 *.tmp
 *~
 ~$*
+
+# Local Spool caches
+sys/cache/

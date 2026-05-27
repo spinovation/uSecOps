@@ -63,6 +63,16 @@ gantt
 * Code the native case management, ticketing lifecycle, and collaboration board.
 * Write local playbooks to block firewall IPs, isolate endpoints, or suspend directory credentials.
 
+### Module 2: Lightweight Telemetry Agents & Hypervisor Context Audits (Milestone 2.1 - 2.5)
+We will expand `src/module2_agents/agent_daemon.py` to capture actual OS-level logging and execute strict hypervisor hardware context audits:
+1. **Cross-Platform Virtualization Heuristics**:
+   - Audit local virtual hardware registries by reading Linux sysfs paths (`/sys/class/dmi/id/sys_vendor`, `/sys/class/dmi/id/product_name`, `/sys/hypervisor/type`) or parsing macOS `sysctl -n hw.model` commands.
+   - Accurately categorize hosts into **Type 1 Bare-Metal Hypervisors** (VMware ESXi, RedHat/Proxmox KVM, Microsoft Hyper-V) vs **Type 2 Hosted Virtualization** (VMware Workstation/Fusion, Oracle VirtualBox, UTM, Parallels Desktop) and attach these context fields to all telemetry packets.
+2. **Actual OS Log Observers**:
+   - Program a multi-threaded system observer tracing active syslog endpoints (`/var/log/syslog` on Linux, `/var/log/system.log` on macOS) and degrading gracefully to simulated event streams if restricted by OS privilege sandboxes.
+3. **Spooling & Encrypted Cache**:
+   - Buffer outgoing payloads during network disconnection using a thread-safe local buffer SQLite db or file cache under `/var/lib/secops/data/cache/`, automatically flushing spooled logs sequentially once mTLS communication is re-established.
+
 ### Milestone 3: Vulnerability Scanning & Console Patch Orchestration (Mythos-Class AI Auditing)
 * Develop the built-in Vulnerability Scanner backend utilizing the local LLM as a **Mythos-class defensive security researcher** to dynamically scan configurations and dependencies.
 * Build the **Exploit Reachability Engine** to map process variables and networks, prioritizing active exposures over static CVE catalog matches.

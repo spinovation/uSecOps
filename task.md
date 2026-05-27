@@ -83,19 +83,19 @@ This living document tracks our execution progress across the four primary modul
 
 ## Module 2: Lightweight Telemetry Agents
 
-- [ ] **2.1 Core Agent Architecture (C/Rust/Go)**
-  - [ ] Initialize the high-performance agent framework targeting Linux, Windows, and macOS.
+- [/] **2.1 Core Agent Architecture (C/Rust/Go)**
+  - [/] Initialize the high-performance agent framework targeting Linux, Windows, and macOS.
   - [ ] Build the mutual TLS (mTLS) secure transport client, integrating with local, air-gapped PKI.
-  - [ ] Design an encrypted local disk spool queue to buffer logs during network disconnections.
+  - [/] Design an encrypted local disk spool queue to buffer logs during network disconnections.
 
-- [ ] **2.2 Platform-Specific Log & Hypervisor Collection Adapters**
+- [/] **2.2 Platform-Specific Log & Hypervisor Collection Adapters**
   - [ ] Build the Windows Event Log and Sysmon collector.
-  - [ ] Develop the Linux Syslog, `auditd` monitor, and eBPF syscall telemetry hook.
-  - [ ] Develop the macOS Unified Logging System (ULS) and Endpoint Security Framework integration.
-  - [ ] Implement local system hypervisor environment auditing context:
-    - [ ] Code hypervisor detection filters for Type 1 (Bare-Metal e.g. ESXi, Hyper-V, KVM).
-    - [ ] Code hypervisor detection filters for Type 2 (Hosted e.g. VMware Workstation, VirtualBox, UTM).
-    - [ ] Map and attach the detected Hypervisor type to outgoing telemetry packets.
+  - [/] Develop the Linux Syslog, `auditd` monitor, and eBPF syscall telemetry hook.
+  - [/] Develop the macOS Unified Logging System (ULS) and Endpoint Security Framework integration.
+  - [/] Implement local system hypervisor environment auditing context:
+    - [/] Code hypervisor detection filters for Type 1 (Bare-Metal e.g. ESXi, Hyper-V, KVM).
+    - [/] Code hypervisor detection filters for Type 2 (Hosted e.g. VMware Workstation, VirtualBox, UTM).
+    - [/] Map and attach the detected Hypervisor type to outgoing telemetry packets.
 
 - [ ] **2.3 Expanded Application & Network Device Monitoring**
   - [ ] Develop local application monitor process hooks to trace core software processes and configurations.
