@@ -88,8 +88,17 @@ Under critical recovery operations (e.g., physical host disconnects or total net
 
 ---
 
-### 7. Zero-Ingestion 5-Year Cold Storage & In-Place Queries
+### 7. Mythos-Class AI-Driven Vulnerability & Reachability Auditing
+To counter the rapid speed of modern, AI-accelerated threats, the appliance incorporates **Mythos-class defensive AI auditing** running on the secure, local LLM container:
+*   **Deep Zero-Day Discovery**: Analyzes configuration variables, file trees, and system dependencies dynamically, going beyond static CVE dictionary lookups to find hidden logic flaws and configuration drift.
+*   **Reachability Assessment**: The local AI agent traces active process maps, open network channels, and active subnets to evaluate if a detected CVE is actually *reachable* and exploitable in the current environment context, dramatically filtering out false-positive noise.
+*   **Proactive Mitigation Synthesis**: Once a reachable risk is validated, the AI agent autonomously synthesizes a targeted configuration hotfix or firewall rule and securely passes it to Module 3 for dual-signed patch deployment.
+
+---
+
+### 8. Zero-Ingestion 5-Year Cold Storage & In-Place Queries
 A critical flaw of standard SIEMs is the requirement to retain years of logs for regulatory audits, incurring massive active database licensing costs. Our appliance resolves this via a **decoupled storage architecture**:
 *   **180-Day Active Search**: ClickHouse maintains partitioned active indexes for rapid, sub-second search and dashboard queries.
 *   **5-Year Cold Archive**: Partitions older than 180 days are automatically aged out, compressed into highly dense **Apache Parquet files**, and offloaded to local on-premises object storage (**Ceph / MinIO**) backed by WORM compliance locks.
 *   **In-Place Federated Queries**: Analysts can run historical searches directly against the cold Parquet files using federated query engines (e.g., **DuckDB**) without undergoing the expensive, slow process of re-hydrating or migrating archives back into ClickHouse, enabling zero-migration, zero-ingestion-tax audits.
+

@@ -106,10 +106,16 @@ graph TD
 
 The control plane responsible for vulnerability assessments, software updates, configuration management, and execution of cryptographic updates across the fleet.
 
-### 4.1 Built-in Vulnerability Scanner
-* **Endpoint Dependency & Vulnerability Auditing**:
-  * Continuously parses agent host system packages, active libraries, and configurations to perform vulnerability assessments against a localized, air-gapped vulnerability database (e.g., matching local CVE mappings).
-  * Automatically audits main platform modules, databases, and dependencies for security compliance and exposes findings to the central dashboard.
+### 4.1 Built-in Vulnerability Scanner (Mythos-Class AI-Driven Auditing)
+* **AI-Native Vulnerability Discovery**:
+  * Leverages the platform's self-hosted Local LLM as an autonomous, **Mythos-class security research agent** operating locally and air-gapped.
+  * Instead of relying solely on static CVE signature-matching, the engine directly parses endpoint dependency trees, active directory permission structures, application settings, and library structures to detect zero-days, configuration drift, and logic flaws.
+* **Exploit Reachability & Priority Analysis**:
+  * Evaluates if a vulnerability is actually **reachable and exploitable** within the running host context (analyzing open port configurations, network segments, and active process runtime mappings).
+  * Drastically reduces administrative overhead and "alert fatigue" by deprioritizing unreachable CVEs and elevating active, high-exposure blast radius risks.
+* **Proactive Patch Synthesis**:
+  * Upon discovering an exploitable vulnerability, the Mythos-class local agent autonomously generates a targeted **custom configuration hotfix, firewall rule, or code patch** to mitigate the exposure.
+  * Forwards this synthesized mitigation straight to the Module 3 Patch Server for dual-signature validation and immediate, analyst-approved deployment.
 
 ### 4.2 Centralized Patching & Upgrade Orchestration
 * **Console-Triggered Upgrades**:

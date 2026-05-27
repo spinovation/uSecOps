@@ -63,8 +63,10 @@ gantt
 * Code the native case management, ticketing lifecycle, and collaboration board.
 * Write local playbooks to block firewall IPs, isolate endpoints, or suspend directory credentials.
 
-### Milestone 3: Vulnerability Scanning & Console Patch Orchestration
-* Develop the built-in Vulnerability Scanner backend to run checks on agent hosts and core platform modules using localized CVE definitions.
+### Milestone 3: Vulnerability Scanning & Console Patch Orchestration (Mythos-Class AI Auditing)
+* Develop the built-in Vulnerability Scanner backend utilizing the local LLM as a **Mythos-class defensive security researcher** to dynamically scan configurations and dependencies.
+* Build the **Exploit Reachability Engine** to map process variables and networks, prioritizing active exposures over static CVE catalog matches.
+* Create the **Proactive Patch Synthesis Engine** using the Local LLM to write configuration hotfixes, forwarding them to the deployment pipeline.
 * Create the centralized **Vulnerability & Update Dashboard** in the Main Console.
 * Program the gRPC patching pipeline allowing administrators to push cryptographically signed updates and hotfixes directly from the UI.
 

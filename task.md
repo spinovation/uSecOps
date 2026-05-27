@@ -117,10 +117,12 @@ This living document tracks our execution progress across the four primary modul
   - [ ] Build the centralized Go-based Patch & Deployment microservice.
   - [ ] Establish secure, bi-directional gRPC control connections to all registered agents.
 
-- [ ] **3.2 Air-Gapped Vulnerability Scanner**
-  - [ ] Build a binary vulnerability scanner analyzing agent environments and system libraries against localized CVE databases.
-  - [ ] Design dependency check scripts to audit core platform modules for security vulnerabilities.
-  - [ ] Expose vulnerability scores and compliance metrics back to the Main Console.
+- [ ] **3.2 Air-Gapped Vulnerability Scanner (Mythos-Class AI Auditing)**
+  - [ ] Build a local-agent module parser scanning endpoint configurations and library trees.
+  - [ ] Connect the scanner to the self-hosted Local LLM to act as a **Mythos-class defensive security researcher**.
+  - [ ] Implement **Exploit Reachability Analysis** by mapping open ports, active subnets, and memory-mapped process calls to prioritize active exposures over static CVE lists.
+  - [ ] Develop the **Proactive Patch Synthesis Engine** utilizing the Local LLM to write configuration hotfixes or firewall rules for active vulnerabilities.
+  - [ ] Expose dynamic reachability scores, AI-generated mitigations, and compliance metrics to the Main Console.
 
 - [ ] **3.3 Secure Upgrade & Patch Management Engine**
   - [ ] Integrate the offline dual-signature cryptographic verification engine.
