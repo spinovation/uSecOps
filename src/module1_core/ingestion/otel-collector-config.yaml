@@ -57,12 +57,10 @@ exporters:
   # Columnar ClickHouse exporter with stream routing
   # Sends normalized protobuf payloads directly to ClickHouse SQL endpoints
   clickhouse:
-    endpoint: tcp://10.103.0.10:9000
-    database: secops_lakehouse
-    username: ingestion_agent
-    password: ${env:CLICKHOUSE_INGEST_PASSWORD}
-    ttl: 180d
-    connection_timeout: 5s
+    endpoint: clickhouse:9000
+    database: default
+    username: default
+    password: ""
     retry_on_failure:
       enabled: true
       initial_interval: 5s
@@ -78,5 +76,3 @@ service:
   telemetry:
     logs:
       level: "info"
-    metrics:
-      address: "0.0.0.0:8888"
