@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # 1. Relational Case Management DB (PostgreSQL)
+  postgres:
+    image: postgres:15-alpine
+    container_name: secops-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: cases
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secopspassword123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./src/module1_core/database/postgres-schema.sql:/docker-entrypoint-initdb.d/init-schema.sql
+    networks:
+      - secops_network
+
+  # 2. Columnar Security Lakehouse (ClickHouse)
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: secops-clickhouse
+    restart: always
+    ports:
+      - "8123:8123" # HTTP API
+      - "9000:9000" # Native Client TCP
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./src/module1_core/database/clickhouse-schema.sql:/docker-entrypoint-initdb.d/init-schema.sql
+      - ./config/clickhouse-keeper.xml:/etc/clickhouse-server/config.d/keeper.xml
+    networks:
+      - secops_network
+
+  # 3. Secure OpenTelemetry Telemetry Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: secops-otel-collector
+    restart: always
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./src/module1_core/ingestion/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317" # mTLS gRPC Ingestion
+      - "4318:4318" # HTTP Ingestion
+    depends_on:
+      - clickhouse
+    networks:
+      - secops_network
+
+  # 4. Next.js Glassmorphism Security Console
+  secops-console:
+    build:
+      context: ./src/module1_core/secops-console
+      dockerfile: Dockerfile
+    container_name: secops-console
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_POSTGRES_URL=postgresql://postgres:secopspassword123@postgres:5432/cases
+      - NEXT_PUBLIC_CLICKHOUSE_URL=http://clickhouse:8123
+    depends_on:
+      - postgres
+      - clickhouse
+    networks:
+      - secops_network
+
+volumes:
+  postgres_data:
+  clickhouse_data:
+
+networks:
+  secops_network:
+    name: secops_network
+    driver: bridge
