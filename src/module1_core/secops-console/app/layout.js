@@ -3,7 +3,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -19,120 +19,136 @@ const geistMono = Geist_Mono({
 export default function RootLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
-  
-  // Dynamic alerts list for simulation
-  const [alarms, setAlarms] = useState([
-    { id: 1, text: "mTLS Handshake Complete (Tanium Endpoint)", type: "success" },
-    { id: 2, text: "ClickHouse Partition Aged out successfully (180 days)", type: "info" }
-  ]);
-  
-  const navItems = [
-    { name: "SIEM Dashboard", path: "/", icon: "📊" },
-    { name: "Virtual Entity Demux", path: "/entities", icon: "🌐" },
-    { name: "Mythos AI & Vulnerability", path: "/vulnerabilities", icon: "🧠" },
-    { name: "OTA Upgrade & Canary", path: "/upgrades", icon: "🛡️" },
-    { name: "SOAR Case Ticketing", path: "/cases", icon: "🎟️" },
-    { name: "Appliance Self-Audit", path: "/audit", icon: "🔌" }
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const navigationSections = [
+    {
+      title: "Operations",
+      items: [
+        { name: "Overview Dashboard", path: "/", icon: "📊" },
+        { name: "Incident Cases (SOAR)", path: "/cases", icon: "🎟️" },
+        { name: "Virtual Entity Demux", path: "/entities", icon: "🌐" }
+      ]
+    },
+    {
+      title: "Analytics & Detections",
+      items: [
+        { name: "Mythos AI & Vulns", path: "/vulnerabilities", icon: "🧠" }
+      ]
+    },
+    {
+      title: "Appliance Management",
+      items: [
+        { name: "OTA Upgrade Server", path: "/upgrades", icon: "🛡️" },
+        { name: "Self-Auditing Log", path: "/audit", icon: "🔌" }
+      ]
+    }
   ];
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (!searchQuery) return;
+    alert(`Google SecOps Index Query: Searching all telemetry and entities for "${searchQuery}"...`);
+    setSearchQuery("");
+  };
 
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <head>
-        <title>uSecOps Appliance Admin Console</title>
-        <meta name="description" content="Next-Gen Zero-Ingestion On-Premise Air-Gapped SecOps Console" />
+        <title>uSecOps - Enterprise Security Console</title>
+        <meta name="description" content="Sentinel-Chronicle Hybrid Air-Gapped SecOps Console" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
-      <body className="min-h-screen bg-[#020205] text-[#f1f3f9] font-sans antialiased overflow-hidden flex">
-        {/* Sidebar Container */}
-        <aside className="w-80 border-r border-[rgba(255,255,255,0.06)] bg-[rgba(5,5,12,0.6)] backdrop-blur-2xl flex flex-col h-screen shrink-0 z-30 select-none">
-          {/* Brand Logo & Strategic Slogan */}
-          <div className="p-6 border-b border-[rgba(255,255,255,0.06)]">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-cyan-400 to-emerald-400">
-                uSecOps
-              </span>
-              <span className="text-[10px] font-mono border border-cyan-500/30 text-cyan-400 px-1.5 py-0.5 rounded uppercase tracking-widest bg-cyan-950/20">
-                v1.0.0
-              </span>
+      <body className="min-h-screen bg-[#08090d] text-[#f1f3f9] font-sans antialiased overflow-hidden flex">
+        {/* Microsoft Sentinel Style Sidebar */}
+        <aside className="w-72 border-r border-[rgba(255,255,255,0.05)] bg-[#0d0f14] flex flex-col h-screen shrink-0 z-30 select-none">
+          {/* Brand header */}
+          <div className="p-6 border-b border-[rgba(255,255,255,0.05)] flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-extrabold tracking-wider bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">
+                  uSecOps
+                </span>
+                <span className="text-[9px] font-mono border border-sky-500/20 text-sky-400 px-1 py-0.2 rounded uppercase bg-sky-950/15">
+                  SEC-OS
+                </span>
+              </div>
+              <p className="text-[9px] font-mono text-slate-500 mt-1 uppercase tracking-wider">
+                Consolidated Security Console
+              </p>
             </div>
-            <p className="text-[10px] font-mono text-cyan-400/60 mt-2 tracking-wide uppercase">
-              Zero-Ingestion Air-Gapped SOC
-            </p>
           </div>
 
-          {/* Navigation Links */}
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            {navItems.map((item) => {
-              const isActive = pathname === item.path;
-              return (
-                <Link
-                  key={item.path}
-                  href={item.path}
-                  className={`flex items-center gap-3.5 px-4 py-3 rounded-lg font-medium text-sm transition-all duration-200 group relative ${
-                    isActive
-                      ? "bg-violet-950/40 text-violet-200 border border-violet-500/30 shadow-[0_0_15px_rgba(139,92,246,0.15)]"
-                      : "text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent"
-                  }`}
-                >
-                  <span className="text-lg transition-transform group-hover:scale-110">{item.icon}</span>
-                  <span>{item.name}</span>
-                  {isActive && (
-                    <span className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-gradient-to-b from-violet-400 to-indigo-500 rounded-r" />
-                  )}
-                </Link>
-              );
-            })}
+          {/* Grouped Sidebar Navigation */}
+          <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
+            {navigationSections.map((section, idx) => (
+              <div key={idx} className="space-y-1.5">
+                <h3 className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                  {section.title}
+                </h3>
+                <div className="space-y-0.5">
+                  {section.items.map((item) => {
+                    const isActive = pathname === item.path;
+                    return (
+                      <Link
+                        key={item.path}
+                        href={item.path}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded text-xs font-semibold transition-all duration-150 ${
+                          isActive
+                            ? "bg-sky-500/8 text-sky-400 border-l-2 border-sky-400"
+                            : "text-slate-400 hover:text-slate-200 hover:bg-white/2"
+                        }`}
+                      >
+                        <span className="text-sm">{item.icon}</span>
+                        <span>{item.name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </nav>
 
-          {/* Platform Status Monitors */}
-          <div className="p-4 border-t border-[rgba(255,255,255,0.06)] bg-black/20 space-y-3 font-mono text-[11px]">
-            <div className="flex justify-between items-center text-slate-400">
-              <span>Hypervisor Engine:</span>
-              <span className="text-cyan-400 font-semibold uppercase tracking-wider">KVM / ESXi</span>
+          {/* Appliance Status */}
+          <div className="p-4 border-t border-[rgba(255,255,255,0.05)] bg-[#0a0b0e] space-y-2 font-mono text-[10px]">
+            <div className="flex justify-between items-center text-slate-500">
+              <span>Security State:</span>
+              <span className="text-emerald-400 font-bold uppercase tracking-wider">AIR-GAPPED</span>
             </div>
-            <div className="flex justify-between items-center text-slate-400">
-              <span>mTLS v1.3 Pipeline:</span>
-              <div className="flex items-center gap-1.5">
-                <span className="pulse-indicator pulse-success"></span>
-                <span className="text-emerald-400">ACTIVE</span>
-              </div>
-            </div>
-            <div className="flex justify-between items-center text-slate-400">
-              <span>Local LLM (vLLM):</span>
-              <span className="text-violet-400">ONLINE (Mythos-7B)</span>
-            </div>
-            <div className="flex justify-between items-center text-slate-400">
-              <span>ClickHouse OLAP:</span>
-              <span className="text-cyan-400">6 MARTS MOUNTED</span>
+            <div className="flex justify-between items-center text-slate-500">
+              <span>Consensus Quorum:</span>
+              <span className="text-sky-400">3/3 ACTIVE</span>
             </div>
           </div>
         </aside>
 
-        {/* Right Console Shell */}
+        {/* Right Workspace Shell */}
         <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
-          {/* Glass Header */}
-          <header className="h-20 border-b border-[rgba(255,255,255,0.06)] bg-[rgba(5,5,10,0.3)] backdrop-blur-xl flex items-center justify-between px-8 z-20">
-            <div className="flex items-center gap-3">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-indicator pulse-success"></div>
-              <span className="text-xs uppercase font-mono tracking-widest text-emerald-400 font-semibold">
-                SYSTEM STATS OPERATIONAL
-              </span>
-            </div>
+          {/* Header - Google Chronicle style Search Bar */}
+          <header className="h-16 border-b border-[rgba(255,255,255,0.05)] bg-[#0d0f14] flex items-center justify-between px-8 z-20">
+            {/* Center: Global Google Chronicle search bar */}
+            <form onSubmit={handleSearchSubmit} className="chronicle-search-container">
+              <span className="absolute left-4 top-2.5 text-slate-500 text-sm">🔍</span>
+              <input
+                type="text"
+                placeholder="Search raw logs, assets, IP addresses, domains, or virtual entity UUIDs..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="chronicle-search-input"
+              />
+            </form>
 
-            {/* Admin Profile & Active Alarms */}
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-slate-900/40 border border-slate-800 font-mono text-xs text-slate-300">
-                <span className="text-violet-400 font-semibold">ROLE:</span>
-                <span>SEC-ADMINISTRATOR</span>
-              </div>
-              <div className="text-slate-400 text-xs font-mono">
-                SEC-LOCK: <span className="text-emerald-400 font-semibold">AIR-GAPPED</span>
+            {/* Profile Info */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 px-3 py-1 rounded bg-[#13161c] border border-slate-800 text-[10px] font-mono text-slate-300">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>ROLE: ADMIN_SOC_LEAD</span>
               </div>
             </div>
           </header>
 
-          {/* Dynamic Page Scroll Container */}
-          <main className="flex-1 overflow-y-auto p-8 relative">
+          {/* Page Viewport */}
+          <main className="flex-1 overflow-y-auto p-8 relative bg-[#08090d]">
             {children}
           </main>
         </div>

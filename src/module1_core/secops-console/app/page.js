@@ -5,17 +5,54 @@ import { useState, useEffect } from "react";
 export default function Dashboard() {
   const [eps, setEps] = useState(14852);
   const [activeAlerts, setActiveAlerts] = useState(6);
-  const [recentEvents, setRecentEvents] = useState([
-    { id: "e1", time: "16:45:12", mart: "Windows Telemetry", entity: "Win11-PTE-84", event: "T1110 - Single Target Logon Failures spike", sev: "HIGH" },
-    { id: "e2", time: "16:44:03", mart: "Firewall Flow", entity: "EdgeFW-01", event: "Inbound port scan detected on Port 443", sev: "MEDIUM" },
-    { id: "e3", time: "16:42:58", mart: "Identity Mart", entity: "Saviynt-SSO", event: "T1078 - Invalid Geovelocity SSO Session Creation", sev: "HIGH" },
-    { id: "e4", time: "16:40:15", mart: "Legacy Telemetry", entity: "AS400-DB3", event: "LegacyTel - QAUDJRN Journal Audit Level Override", sev: "CRITICAL" },
-    { id: "e5", time: "16:38:42", mart: "Linux Telemetry", entity: "KubNode-9", event: "auditd - Unauthorized root sudo execution override attempt", sev: "HIGH" }
+  const [activePlaybookId, setActivePlaybookId] = useState(null);
+  const [playbookLogs, setPlaybookLogs] = useState([]);
+  const [isExecuting, setIsExecuting] = useState(false);
+
+  // Alerts array populated with MITRE tags and syslog context
+  const [alerts, setAlerts] = useState([
+    {
+      id: "SEC-902",
+      title: "Account Takeover (ATO) - Impossible Travel Anomaly",
+      mitre: "T1078",
+      entity: "KVM:4a12c984:AppInstance-B",
+      source: "Tokyo, JP & Boston, US",
+      syslog: "sshd: Accepted publickey for sridhargs from 185.220.101.5",
+      severity: "CRITICAL",
+      status: "ACTIVE"
+    },
+    {
+      id: "SEC-903",
+      title: "Active Directory Password Spray Attack",
+      mitre: "T1110",
+      entity: "ESXi:f0f1882a:AppInstance-C",
+      source: "10.101.40.2 (Local vNIC)",
+      syslog: "krb5: Kerberos login failure for user admin - Preauth failed",
+      severity: "HIGH",
+      status: "ACTIVE"
+    },
+    {
+      id: "SEC-904",
+      title: "Container Privilege Elevation eBPF Alert",
+      mitre: "T1548",
+      entity: "KVM:4a12c984:AppInstance-A",
+      source: "Container ID: c52ea7b",
+      syslog: "auditd: execve command: sudo rm -rf /etc/hosts (uid=1001)",
+      severity: "HIGH",
+      status: "ACTIVE"
+    },
+    {
+      id: "SEC-905",
+      title: "Tandem Legacy System SMF Journal Level Override",
+      mitre: "T1562",
+      entity: "ZOS:LPAR2:RACF_MGR",
+      source: "Tandem LegacyTel Bridge",
+      syslog: "LegacyTel: RACF Audit override level set to: NONE",
+      severity: "CRITICAL",
+      status: "ACTIVE"
+    }
   ]);
 
-  const [activeTab, setActiveTab] = useState("all");
-
-  // Dynamic log count simulation
   useEffect(() => {
     const timer = setInterval(() => {
       setEps((prev) => prev + Math.floor(Math.random() * 201 - 100));
@@ -23,159 +60,230 @@ export default function Dashboard() {
     return () => clearInterval(timer);
   }, []);
 
-  const handleSimulateAlert = () => {
-    const newAlert = {
-      id: `e${Date.now()}`,
-      time: new Date().toTimeString().split(' ')[0],
-      mart: "Proxy Telemetry",
-      entity: "Proxy-SGW-12",
-      event: "T1098 - Direct PII unmasking endpoint accessed without Supervisor Token",
-      sev: "CRITICAL"
-    };
-    setRecentEvents([newAlert, ...recentEvents.slice(0, 4)]);
-    setActiveAlerts((prev) => prev + 1);
-  };
+  const triggerSOARPlaybook = (alertId, playbookName) => {
+    setActivePlaybookId(alertId);
+    setIsExecuting(true);
+    setPlaybookLogs([
+      `[SOAR Core] Starting containment sequence for Alert ${alertId}...`,
+      `[OTel Network] Resolving virtual interface routes...`,
+      `[Playbook] Triggering quarantine action: ${playbookName}...`
+    ]);
 
-  const getSeverityBadge = (sev) => {
-    switch (sev) {
-      case "CRITICAL":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-950/40 text-rose-400 border border-rose-500/30">CRITICAL</span>;
-      case "HIGH":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-950/40 text-amber-400 border border-amber-500/30">HIGH</span>;
-      default:
-        return <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-950/40 text-cyan-400 border border-cyan-500/30">MEDIUM</span>;
-    }
+    setTimeout(() => {
+      setPlaybookLogs((prev) => [
+        ...prev,
+        `[Agent TLS] Authenticated gRPC socket with endpoint client successfully.`,
+        `[Containment] Pushed iptables route block config packet.`,
+        `[Containment] Host VM network interface disabled except loopback.`
+      ]);
+    }, 1500);
+
+    setTimeout(() => {
+      setPlaybookLogs((prev) => [
+        ...prev,
+        `[Postgres Cases] Updated case status to: CONTAINED.`,
+        `🟢 SUCCESS: Telemetry agent quarantined. Cluster status stabilized.`
+      ]);
+      setIsExecuting(false);
+
+      // Mark the alert as resolved in grid
+      setAlerts((prevAlerts) =>
+        prevAlerts.map((a) =>
+          a.id === alertId ? { ...a, status: "CONTAINED" } : a
+        )
+      );
+    }, 3500);
   };
 
   return (
     <div className="space-y-8">
-      {/* Welcome Banner */}
+      {/* Page Title */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent">
-            Unified Security Operations Center
+          <h1 className="text-2xl font-extrabold tracking-tight text-white">
+            Security Operations Center (Overview)
           </h1>
-          <p className="text-slate-400 text-sm mt-1">
-            Real-time visual telemetry, threat correlation, and local autonomic security research loops.
+          <p className="text-xs text-slate-400 mt-1 font-mono">
+            Hybrid workspace consolidating Sentinel analytics metrics and Google Chronicle entity tracking.
           </p>
         </div>
-        <button
-          onClick={handleSimulateAlert}
-          className="btn-glass btn-glass-danger font-mono text-xs uppercase"
-        >
-          🚨 Simulate ATO Incident
-        </button>
       </div>
 
-      {/* Metrics Row */}
+      {/* MS Sentinel style KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* EPS */}
-        <div className="glass-panel p-6 border-glow-success relative overflow-hidden">
-          <div className="absolute right-4 top-4 text-emerald-400/20 text-3xl">📥</div>
-          <span className="text-xs font-mono uppercase tracking-wider text-slate-400 block">Ingestion Velocity</span>
-          <span className="text-3xl font-extrabold text-emerald-400 block mt-2 font-mono">{eps.toLocaleString()} <span className="text-xs font-normal">EPS</span></span>
-          <span className="text-[10px] font-mono text-slate-400 mt-2 block">Standard mTLS Ingestion Layer</span>
+        <div className="enterprise-panel p-5">
+          <span className="text-[10px] font-bold font-mono text-slate-400 uppercase tracking-wider block">Ingestion Rate</span>
+          <div className="flex justify-between items-end mt-2">
+            <span className="text-2xl font-extrabold font-mono text-sky-400">{eps.toLocaleString()} <span className="text-xs font-normal text-slate-400">EPS</span></span>
+            <span className="sentinel-kpi-trend-up">▲ +12.4%</span>
+          </div>
+          <div className="w-full bg-slate-800 h-1 rounded overflow-hidden mt-3">
+            <div className="bg-sky-400 h-full w-[70%]"></div>
+          </div>
         </div>
 
-        {/* Active Alarms */}
-        <div className="glass-panel p-6 border-glow-danger relative overflow-hidden">
-          <div className="absolute right-4 top-4 text-rose-500/20 text-3xl">⚠️</div>
-          <span className="text-xs font-mono uppercase tracking-wider text-slate-400 block">Unresolved Incidents</span>
-          <span className="text-3xl font-extrabold text-rose-400 block mt-2 font-mono">{activeAlerts} <span className="text-xs font-normal">Open Cases</span></span>
-          <span className="text-[10px] font-mono text-rose-400 mt-2 block pulse-indicator pulse-danger"> Dynamic Threat Vector Matches</span>
+        <div className="enterprise-panel p-5">
+          <span className="text-[10px] font-bold font-mono text-slate-400 uppercase tracking-wider block">Active Incidents</span>
+          <div className="flex justify-between items-end mt-2">
+            <span className="text-2xl font-extrabold font-mono text-rose-400">{activeAlerts} <span className="text-xs font-normal text-slate-400">Open</span></span>
+            <span className="sentinel-kpi-trend-down">▼ -18.2%</span>
+          </div>
+          <div className="w-full bg-slate-800 h-1 rounded overflow-hidden mt-3">
+            <div className="bg-rose-400 h-full w-[35%]"></div>
+          </div>
         </div>
 
-        {/* Fleet Count */}
-        <div className="glass-panel p-6 relative overflow-hidden">
-          <div className="absolute right-4 top-4 text-cyan-400/20 text-3xl">🖥️</div>
-          <span className="text-xs font-mono uppercase tracking-wider text-slate-400 block">Registered Telemetry Fleet</span>
-          <span className="text-3xl font-extrabold text-cyan-400 block mt-2 font-mono">1,489 <span className="text-xs font-normal">Active</span></span>
-          <span className="text-[10px] font-mono text-slate-400 mt-2 block">AS/400 + Linux + Win + ESXi Nodes</span>
+        <div className="enterprise-panel p-5">
+          <span className="text-[10px] font-bold font-mono text-slate-400 uppercase tracking-wider block">Monitored Assets</span>
+          <div className="flex justify-between items-end mt-2">
+            <span className="text-2xl font-extrabold font-mono text-emerald-400">1,489 <span className="text-xs font-normal text-slate-400">Active</span></span>
+            <span className="sentinel-kpi-trend-up">▲ +2.1%</span>
+          </div>
+          <div className="w-full bg-slate-800 h-1 rounded overflow-hidden mt-3">
+            <div className="bg-emerald-400 h-full w-[85%]"></div>
+          </div>
         </div>
 
-        {/* Compression */}
-        <div className="glass-panel p-6 relative overflow-hidden">
-          <div className="absolute right-4 top-4 text-violet-400/20 text-3xl">🗜️</div>
-          <span className="text-xs font-mono uppercase tracking-wider text-slate-400 block">ClickHouse Compression</span>
-          <span className="text-3xl font-extrabold text-violet-400 block mt-2 font-mono">12.6x <span className="text-xs font-normal">Ratio</span></span>
-          <span className="text-[10px] font-mono text-slate-400 mt-2 block">Zero-Ingestion Cost Saving Enabled</span>
+        <div className="enterprise-panel p-5">
+          <span className="text-[10px] font-bold font-mono text-slate-400 uppercase tracking-wider block">Consensus Health</span>
+          <div className="flex justify-between items-end mt-2">
+            <span className="text-2xl font-extrabold font-mono text-indigo-400">100% <span className="text-xs font-normal text-slate-400">Stable</span></span>
+            <span className="sentinel-kpi-trend-up">▲ 0.0%</span>
+          </div>
+          <div className="w-full bg-slate-800 h-1 rounded overflow-hidden mt-3">
+            <div className="bg-indigo-400 h-full w-[100%]"></div>
+          </div>
         </div>
       </div>
 
-      {/* Main Grid: Data Marts & Critical Events */}
+      {/* Center Row: Geovelocity Visualizer & Mart Health */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Data Mart Ingestion Status */}
-        <div className="glass-panel p-6 lg:col-span-1 space-y-6">
+        {/* Google Chronicle style Geovelocity Visualizer */}
+        <div className="enterprise-panel p-5 lg:col-span-2 space-y-4">
           <div>
-            <h2 className="text-lg font-bold text-slate-200">Provisioned Data Marts</h2>
-            <p className="text-xs text-slate-400">ClickHouse Columnar Storage Nodes</p>
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider font-mono">Geovelocity Impossible Travel Visualizer</h2>
+            <p className="text-[11px] text-slate-400 mt-0.5">Real-time mapping of concurrent geolocation SSO credentials requests</p>
           </div>
-          
-          <div className="space-y-4">
+
+          <div className="geovelocity-visualizer flex items-center justify-between px-16 relative">
+            {/* Geolocation nodes mapping */}
+            <div className="text-center z-10">
+              <div className="w-4 h-4 rounded-full bg-sky-400 animate-ping absolute left-[12%] top-[35%]"></div>
+              <div className="w-3.5 h-3.5 rounded-full bg-sky-500 border border-slate-900 absolute left-[12%] top-[35%]"></div>
+              <span className="text-[10px] font-mono text-sky-300 absolute left-[8%] top-[55%]">Boston, US<br/>(User Host)</span>
+            </div>
+
+            <div className="flex-1 border-t border-dashed border-rose-500/40 relative mx-4">
+              <div className="absolute left-[40%] top-[-8px] px-2 py-0.5 rounded bg-rose-950/80 border border-rose-500/30 text-[9px] font-mono text-rose-400 uppercase">
+                Impossible Travel
+              </div>
+            </div>
+
+            <div className="text-center z-10">
+              <div className="w-4 h-4 rounded-full bg-rose-500 animate-ping absolute right-[12%] top-[35%]"></div>
+              <div className="w-3.5 h-3.5 rounded-full bg-rose-500 border border-slate-900 absolute right-[12%] top-[35%]"></div>
+              <span className="text-[10px] font-mono text-rose-400 absolute right-[8%] top-[55%]">Tokyo, JP<br/>(Unauthorized login)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Data Mart Performance */}
+        <div className="enterprise-panel p-5 lg:col-span-1 space-y-4">
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider font-mono">Telemetry Data Marts</h2>
+          <div className="space-y-2.5">
             {[
-              { name: "Legacy Telemetry Mart", desc: "AS/400, z/OS, SMF records", eps: "2,410", status: "Active" },
-              { name: "Windows Event Mart", desc: "AD, Sysmon, Security Logs", eps: "5,815", status: "Active" },
-              { name: "Linux Syslog & eBPF", desc: "Kernel, Containers, Syslogs", eps: "4,180", status: "Active" },
-              { name: "Firewall Flow Mart", desc: "Multi-tenant routing tables", eps: "1,200", status: "Active" },
-              { name: "Proxy & Egress Mart", desc: "Egress Web and DNS request vectors", eps: "840", status: "Active" },
-              { name: "Identity Governance Mart", desc: "Saviynt, SailPoint SSO, MFA", eps: "407", status: "Active" }
+              { name: "Windows Event Mart", desc: "Active Directory logs", state: "STABLE", color: "text-emerald-400" },
+              { name: "Linux Syslog & eBPF", desc: "Syslog kernel traces", state: "STABLE", color: "text-emerald-400" },
+              { name: "Firewall Flow Mart", desc: "Ingestion flow records", state: "STABLE", color: "text-emerald-400" },
+              { name: "Identity Governance Mart", desc: "MFA, Saviynt log traces", state: "ALERT", color: "text-rose-400" }
             ].map((mart, idx) => (
-              <div key={idx} className="p-3.5 rounded-lg bg-black/30 border border-slate-800 hover:border-slate-700 transition duration-150">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-semibold text-slate-200">{mart.name}</span>
-                  <span className="text-[10px] font-mono text-cyan-400 font-bold">{mart.eps} EPS</span>
+              <div key={idx} className="p-3 bg-black/30 border border-slate-900 rounded flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-200 block">{mart.name}</span>
+                  <span className="text-[10px] text-slate-500">{mart.desc}</span>
                 </div>
-                <div className="flex justify-between items-center mt-2 text-[10px] text-slate-400">
-                  <span>{mart.desc}</span>
-                  <div className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                    <span className="text-emerald-400 font-semibold">{mart.status}</span>
-                  </div>
-                </div>
+                <span className={`text-[10px] font-mono font-bold ${mart.color}`}>{mart.state}</span>
               </div>
             ))}
           </div>
         </div>
+      </div>
 
-        {/* Right Column: Real-time Incident Feed */}
-        <div className="glass-panel p-6 lg:col-span-2 space-y-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-lg font-bold text-slate-200">Correlated Real-time Alerts</h2>
-              <p className="text-xs text-slate-400">Underlying events mapped directly to MITRE ATT&CK</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-mono text-slate-400">Filter Severity:</span>
-              <select className="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-slate-300">
-                <option value="all">ALL SEVERITY</option>
-                <option value="critical">CRITICAL ONLY</option>
-                <option value="high">HIGH & CRITICAL</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            {recentEvents.map((evt) => (
-              <div key={evt.id} className="p-4 rounded-lg bg-black/40 border border-slate-800/80 hover:border-slate-700/80 transition duration-150 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2.5">
-                    {getSeverityBadge(evt.sev)}
-                    <span className="text-xs font-mono text-cyan-400 font-semibold">{evt.mart}</span>
-                    <span className="text-[10px] font-mono text-slate-500">Time: {evt.time}</span>
-                  </div>
-                  <h3 className="text-sm font-semibold text-slate-200">{evt.event}</h3>
-                  <p className="text-xs text-slate-400">Impacted Entity Composite Context: <span className="font-mono text-cyan-400">{evt.entity}</span></p>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <button className="btn-glass text-[11px] py-1 px-3">
-                    🔍 Investigate
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* Bottom Grid: Actionable Alert Manager */}
+      <div className="enterprise-panel p-6 space-y-6">
+        <div>
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider font-mono">Actionable Security Alerts Grid</h2>
+          <p className="text-[11px] text-slate-400 mt-0.5">Correlated security events mapped to MITRE TTPs and inline containment triggers</p>
         </div>
+
+        <div className="overflow-x-auto">
+          <table className="enterprise-grid">
+            <thead>
+              <tr>
+                <th>Threat ID</th>
+                <th>Incident Details</th>
+                <th>MITRE TTP</th>
+                <th>Exposure Entity Target</th>
+                <th>Raw Syslog Preview</th>
+                <th>Severity</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {alerts.map((alert) => (
+                <tr key={alert.id}>
+                  <td className="font-mono text-sky-400 font-bold">{alert.id}</td>
+                  <td>
+                    <div className="font-semibold text-slate-200">{alert.title}</div>
+                    <div className="text-[10px] text-slate-500">Source: {alert.source}</div>
+                  </td>
+                  <td className="font-mono"><span className="px-1.5 py-0.5 rounded bg-indigo-950/20 border border-indigo-500/20 text-indigo-300">{alert.mitre}</span></td>
+                  <td className="font-mono text-[10px] text-slate-400">{alert.entity}</td>
+                  <td className="font-mono text-[10px] text-slate-400 max-w-[220px] truncate" title={alert.syslog}>{alert.syslog}</td>
+                  <td>
+                    <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
+                      alert.severity === "CRITICAL" ? "badge-critical" : "badge-high"
+                    }`}>{alert.severity}</span>
+                  </td>
+                  <td>
+                    <span className={`text-[10px] font-bold font-mono ${alert.status === "CONTAINED" ? "text-emerald-400" : "text-rose-400"}`}>
+                      {alert.status}
+                    </span>
+                  </td>
+                  <td>
+                    {alert.status === "ACTIVE" ? (
+                      <button
+                        onClick={() => triggerSOARPlaybook(alert.id, "quarantine_host_vm")}
+                        disabled={isExecuting}
+                        className="btn-sentinel"
+                      >
+                        ⚡ Isolate Node
+                      </button>
+                    ) : (
+                      <span className="text-[10px] text-slate-500 font-semibold font-mono">CONTAINED</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Dynamic SOAR Action Console */}
+        {activePlaybookId && (
+          <div className="border-t border-[rgba(255,255,255,0.05)] pt-6 space-y-3">
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider font-mono">Live SOAR Playbook Execution Terminal</h3>
+            <div className="p-4 bg-black/60 border border-slate-900 rounded-md font-mono text-[11px] text-cyan-400 space-y-1.5 max-h-[160px] overflow-y-auto">
+              {playbookLogs.map((log, idx) => (
+                <div key={idx} className="flex gap-2">
+                  <span>&gt;</span>
+                  <span className={log.includes("SUCCESS") ? "text-emerald-300 font-bold" : ""}>{log}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

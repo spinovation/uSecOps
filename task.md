@@ -59,9 +59,9 @@ This living document tracks our execution progress across the four primary modul
   - [ ] Develop a supervisor-approval ticket request workflow for raw PII access.
   - [ ] Code a background TTL daemon to automatically revoke PII clearance tokens and restore masking exactly 24 hours after approval.
 
-- [x] **1.7 Main Console Dashboard UI**
-  - [x] Implement a premium Next.js glassmorphism admin dashboard.
-  - [x] Design visual metrics boards, alert flow lines, interactive node exposure maps, and the update/patch control UI.
+- [x] **1.7 Main Console Dashboard UI (Sentinel-Chronicle Redesign Overhaul)**
+  - [x] Redesign layouts with Google SecOps Global Search Workspace and MS Sentinel-style KPI cards.
+  - [x] Implement interactive Geovelocity Impossible Travel visualizer and inline SOAR triggers.
 
 - [ ] **1.8 Zero Trust & Identity Threat Detection (ITDR) Integration**
   - [ ] Configure the OTel receiver layer to enforce strict **mTLS v1.3 continuous authentication** checks for all incoming streams.

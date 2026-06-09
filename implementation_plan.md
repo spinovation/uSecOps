@@ -80,15 +80,17 @@ We will expand `src/module2_agents/agent_daemon.py` to capture actual OS-level l
 * Create the centralized **Vulnerability & Update Dashboard** in the Main Console.
 * Program the gRPC patching pipeline allowing administrators to push cryptographically signed updates and hotfixes directly from the UI.
 
-### Milestone 1.7: Next.js Glassmorphism central Security Console (Milestone 1.7)
-We will design a high-fidelity, premium Next.js console under `src/module1_core/console`. To achieve a state-of-the-art UI/UX, we will implement:
-1. **Design System & Global Styles**: Custom Vanilla CSS with custom glassmorphism variables (using backdrop filters, tailored HSL color tokens, rich gradients, and smooth scale transitions).
-2. **Main Security Dashboard Dashboard (`/`)**: Displays dynamic SIEM/OTel log ingestion throughput, active alerts count, and container CPU/RAM resource gauges.
-3. **Virtual Entity Exposure Map (`/entities`)**: A visual network topology rendering VM entities. It explicitly maps logs using our unique composite key: `[Hypervisor Type] + [Host VM UUID] + [Application ID]`.
-4. **Autonomous AI & Vulnerability Center (`/vulnerabilities`)**: Exposes Mythos AI reachability ratings (comparing static CVE scores with active exposure status) and visualizes synthesized hotfix patches.
-5. **OTA Patch & Upgrade Control Panel (`/upgrades`)**: Interfaces with the gRPC patch server to trigger signed upgrades, configure canary deployments (1%, 10%, 50%, 100%), and monitor active rollbacks.
-6. **Relational Ticketing & SOAR Case Manager (`/cases`)**: Displays PostgreSQL ACID security cases, evidence canvas pins, and human-in-the-loop approval gates for high-impact containment actions.
-7. **Appliance Self-Auditing & Break-Glass Terminal (`/audit`)**: Renders console audit streams (Next.js web interactions and host `auditd` commands) and features a glowing, high-severity "Break-Glass" recovery trigger.
+### Milestone 1.7: Next.js Sentinel-Chronicle Hybrid Security Console (Redesign)
+We will redesign the central console under `src/module1_core/secops-console` to mimic the high-fidelity enterprise dashboard layouts of Microsoft Sentinel and Google SecOps (Chronicle):
+1. **Global Search Workspace (Google SecOps Chronicle style)**:
+   - A prominent, dark-themed threat search bar allowing analysts to query any IP, host VM, user account, or composite virtual entity ID.
+2. **Sleek Enterprise Grid & KPI Metrics (MS Sentinel style)**:
+   - Four large KPI panels showing log volume trends, active incidents, agent connectivity, and CPU/RAM appliance metrics.
+   - Grouped enterprise navigation sidebar dividing pages into Operations (Dashboard, Cases, Entities), Analytics (Threat Intel, Mythos AI Scanner), and Configuration (OTA Upgrades, Self-Audits, Break-Glass).
+3. **Geovelocity Attack Visualizer**:
+   - Visual mockups mapping geographically impossible connections (such as ATO logins from Tokyo, Boston, and Berlin concurrently) showing direct exposure paths.
+4. **Actionable Alerts Grid**:
+   - Advanced tabular list of alerts complete with MITRE ATT&CK TTP badges (`T1078`, `T1110`), raw syslog previews, and one-click gRPC SOAR isolation triggers.
 
 ### Milestone 4: Autonomous 8-Step AI Agent Workflow
 * Install and host the Local LLM inference server (vLLM/Ollama running Mistral/Llama) inside the air-gapped environment.
