@@ -60,10 +60,10 @@ export default function Upgrades() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
           OTA Patch & Upgrade Control Panel
         </h1>
-        <p className="text-slate-400 text-sm mt-1">
+        <p className="text-slate-500 text-sm mt-1">
           Cryptographically signed OTA agent upgrades and canary deployments via bi-directional secure gRPC streams.
         </p>
       </div>
@@ -72,13 +72,13 @@ export default function Upgrades() {
         {/* Upgrade Form Config */}
         <div className="lg:col-span-2 space-y-6">
           <div className="glass-panel p-6 space-y-6">
-            <h2 className="text-lg font-bold text-slate-200">Configure Update Deployment</h2>
+            <h2 className="text-lg font-bold text-slate-800">Configure Update Deployment</h2>
 
             {/* Canary Scope Slider */}
             <div className="space-y-3">
               <div className="flex justify-between items-center text-sm">
-                <span className="font-semibold text-slate-300">Canary Target Fleet Scale</span>
-                <span className="font-mono text-cyan-400 font-bold text-base">{canaryRate}% of fleet ({Math.ceil(1489 * canaryRate / 100)} hosts)</span>
+                <span className="font-semibold text-slate-700">Canary Target Fleet Scale</span>
+                <span className="font-mono text-cyan-600 font-bold text-base">{canaryRate}% of fleet ({Math.ceil(1489 * canaryRate / 100)} hosts)</span>
               </div>
               <input
                 type="range"
@@ -86,7 +86,7 @@ export default function Upgrades() {
                 max="100"
                 value={canaryRate}
                 onChange={(e) => setCanaryRate(parseInt(e.target.value))}
-                className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-violet-500"
+                className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-violet-500"
               />
               <div className="flex justify-between text-[10px] text-slate-500 font-mono">
                 <span>1% (CANARY STAGE 1)</span>
@@ -97,29 +97,29 @@ export default function Upgrades() {
             </div>
 
             {/* Dual Signatures */}
-            <div className="space-y-4 pt-4 border-t border-[rgba(255,255,255,0.06)]">
-              <h3 className="text-xs font-mono uppercase text-slate-500">Dual-Signature Cryptographic Trust Validation</h3>
+            <div className="space-y-4 pt-4 border-t border-slate-200">
+              <h3 className="text-xs font-mono uppercase text-slate-500 font-bold">Dual-Signature Cryptographic Trust Validation</h3>
 
               {/* Developer Sign */}
               <div className="space-y-2">
-                <label className="text-xs text-slate-400 font-mono block">1. Developer Build Signature Hash (Read-Only Verified)</label>
+                <label className="text-xs text-slate-500 font-mono block">1. Developer Build Signature Hash (Read-Only Verified)</label>
                 <input
                   type="text"
                   readOnly
                   value={developerSignature}
-                  className="w-full bg-slate-950 border border-slate-900 rounded p-3 font-mono text-[11px] text-cyan-400 select-all"
+                  className="w-full bg-slate-50 border border-slate-200 rounded p-3 font-mono text-[11px] text-cyan-700 select-all"
                 />
               </div>
 
               {/* Admin Sign Input */}
               <div className="space-y-2">
-                <label className="text-xs text-slate-300 font-semibold block">2. Enter Administrator Cryptographic Approval Key</label>
+                <label className="text-xs text-slate-700 font-semibold block">2. Enter Administrator Cryptographic Approval Key</label>
                 <input
                   type="password"
                   placeholder="Enter SecOps Administrative signature hash key"
                   value={adminKey}
                   onChange={(e) => setAdminKey(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded p-3 font-mono text-xs text-violet-300 focus:outline-none focus:border-violet-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded p-3 font-mono text-xs text-violet-700 focus:outline-none focus:border-violet-500"
                 />
                 <span className="text-[10px] text-slate-500 block">Required to authorize deployment command transmission over the active control plane.</span>
               </div>
@@ -142,11 +142,11 @@ export default function Upgrades() {
         <div className="lg:col-span-1">
           <div className="glass-panel p-6 sticky top-8 min-h-[400px] flex flex-col justify-between">
             <div>
-              <h3 className="text-lg font-bold text-slate-200">gRPC Control Plane logs</h3>
-              <p className="text-xs text-slate-400 mt-1">Bi-directional connection activity console</p>
+              <h3 className="text-lg font-bold text-slate-800">gRPC Control Plane logs</h3>
+              <p className="text-xs text-slate-500 mt-1">Bi-directional connection activity console</p>
             </div>
 
-            <div className="flex-1 my-4 min-h-[220px] bg-black/60 border border-slate-900 rounded p-4 overflow-y-auto font-mono text-[10px] leading-relaxed text-cyan-400 space-y-2">
+            <div className="flex-1 my-4 min-h-[220px] bg-[#0f172a] border border-slate-800 rounded p-4 overflow-y-auto font-mono text-[10px] leading-relaxed text-cyan-400 space-y-2">
               {upgradeLogs.length > 0 ? (
                 upgradeLogs.map((log, idx) => {
                   const isAnomaly = log.includes("ALERT") || log.includes("FAILURE");
@@ -164,20 +164,20 @@ export default function Upgrades() {
                   );
                 })
               ) : (
-                <div className="text-slate-600 flex items-center justify-center h-full text-center">
+                <div className="text-slate-500 flex items-center justify-center h-full text-center">
                   Bi-directional control channel idle. Ready to deploy signed update.
                 </div>
               )}
             </div>
 
-            <div className="p-3.5 bg-black/20 rounded border border-slate-800 text-[10px] font-mono space-y-2">
-              <div className="flex justify-between items-center text-slate-400">
+            <div className="p-3.5 bg-slate-50 rounded border border-slate-200 text-[10px] font-mono space-y-2">
+              <div className="flex justify-between items-center text-slate-600">
                 <span>Canary Health status:</span>
-                <span className={rollbackAnomalies ? "text-rose-400 font-bold" : "text-emerald-400 font-bold"}>
+                <span className={rollbackAnomalies ? "text-rose-600 font-bold" : "text-emerald-600 font-bold"}>
                   {rollbackAnomalies ? "CANARY_ANOMALY (ROLLED BACK)" : isUpgrading ? "MONITORING..." : "IDLE"}
                 </span>
               </div>
-              <div className="flex justify-between items-center text-slate-400">
+              <div className="flex justify-between items-center text-slate-600">
                 <span>Upgrade Canary Threshold:</span>
                 <span>10% Limit before full-fleet push</span>
               </div>

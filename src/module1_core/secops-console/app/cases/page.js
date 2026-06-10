@@ -102,10 +102,10 @@ export default function Cases() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
           Relational Case Ticketing & SOAR Workspace
         </h1>
-        <p className="text-slate-400 text-sm mt-1">
+        <p className="text-slate-500 text-sm mt-1">
           Relational Postgres ticket models synchronized with human-in-the-loop SOAR containment orchestration triggers.
         </p>
       </div>
@@ -113,28 +113,28 @@ export default function Cases() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Cases List */}
         <div className="lg:col-span-1 space-y-4">
-          <h2 className="text-lg font-bold text-slate-200">Incident Ticket Board</h2>
+          <h2 className="text-lg font-bold text-slate-800">Incident Ticket Board</h2>
           <div className="space-y-3">
             {cases.map((c) => (
               <div
                 key={c.id}
                 onClick={() => setSelectedCase(c)}
                 className={`p-4 rounded-lg border cursor-pointer glass-panel ${
-                  selectedCase?.id === c.id ? "border-violet-500 bg-violet-950/10" : "border-slate-800"
+                  selectedCase?.id === c.id ? "border-violet-500 bg-violet-50/60" : "border-slate-200"
                 }`}
               >
                 <div className="flex justify-between items-center text-[10px] font-mono mb-2">
-                  <span className="text-cyan-400 font-semibold">{c.id}</span>
+                  <span className="text-cyan-600 font-semibold">{c.id}</span>
                   <span className={`px-2 py-0.5 rounded font-bold ${
-                    c.severity === "CRITICAL" ? "bg-rose-950/30 text-rose-400 border border-rose-500/20" : "bg-amber-950/30 text-amber-400 border border-amber-500/20"
+                    c.severity === "CRITICAL" ? "bg-rose-50 text-rose-600 border border-rose-200" : "bg-amber-50 text-amber-600 border border-amber-200"
                   }`}>
                     {c.severity}
                   </span>
                 </div>
-                <h3 className="text-xs font-bold text-slate-200 truncate">{c.title}</h3>
-                <div className="flex justify-between items-center mt-3 text-[10px] text-slate-400 font-mono">
+                <h3 className="text-xs font-bold text-slate-800 truncate">{c.title}</h3>
+                <div className="flex justify-between items-center mt-3 text-[10px] text-slate-500 font-mono">
                   <span>Assigned: {c.assignedTo}</span>
-                  <span className="text-cyan-300 font-semibold uppercase">{c.status.replace('_', ' ')}</span>
+                  <span className="text-cyan-600 font-semibold uppercase">{c.status.replace('_', ' ')}</span>
                 </div>
               </div>
             ))}
@@ -147,16 +147,16 @@ export default function Cases() {
             {selectedCase ? (
               <div className="space-y-6">
                 {/* Info block */}
-                <div className="flex justify-between items-start gap-4 border-b border-[rgba(255,255,255,0.06)] pb-4">
+                <div className="flex justify-between items-start gap-4 border-b border-slate-200 pb-4">
                   <div>
-                    <span className="text-xs font-mono text-cyan-400 font-bold">{selectedCase.id}</span>
-                    <h2 className="text-lg font-extrabold text-slate-200 mt-0.5">{selectedCase.title}</h2>
-                    <p className="text-[11px] text-slate-400 mt-1">
-                      Reporter: {selectedCase.reporter} | MITRE TTP: <span className="font-mono text-violet-300">{selectedCase.mitre}</span>
+                    <span className="text-xs font-mono text-cyan-600 font-bold">{selectedCase.id}</span>
+                    <h2 className="text-lg font-extrabold text-slate-900 mt-0.5">{selectedCase.title}</h2>
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      Reporter: {selectedCase.reporter} | MITRE TTP: <span className="font-mono text-violet-600">{selectedCase.mitre}</span>
                     </p>
                   </div>
                   <div className="shrink-0">
-                    <span className="px-3 py-1 bg-violet-950/40 text-violet-200 border border-violet-500/30 rounded font-mono text-xs font-semibold">
+                    <span className="px-3 py-1 bg-violet-50 text-violet-600 border border-violet-200 rounded font-mono text-xs font-semibold">
                       STATUS: {selectedCase.status}
                     </span>
                   </div>
@@ -164,11 +164,11 @@ export default function Cases() {
 
                 {/* Evidence Canvas Pins */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-bold text-slate-200">Forensic Evidence Pin Canvas</h3>
+                  <h3 className="text-sm font-bold text-slate-800">Forensic Evidence Pin Canvas</h3>
                   <div className="space-y-2">
                     {selectedCase.evidence.map((line, idx) => (
-                      <div key={idx} className="p-3 bg-black/40 border border-slate-900 rounded-md font-mono text-[11px] text-slate-300 flex items-start gap-2.5">
-                        <span className="text-slate-500 mt-0.5">📌</span>
+                      <div key={idx} className="p-3 bg-slate-50 border border-slate-200 rounded-md font-mono text-[11px] text-slate-700 flex items-start gap-2.5">
+                        <span className="text-slate-400 mt-0.5">📌</span>
                         <span>{line}</span>
                       </div>
                     ))}
@@ -176,14 +176,14 @@ export default function Cases() {
                 </div>
 
                 {/* PII Privacy unmasking */}
-                <div className="p-4 bg-slate-900/20 border border-slate-800 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="space-y-1">
-                    <span className="text-[10px] font-mono text-slate-400 uppercase block">PII Privacy Control System</span>
-                    <span className="text-xs font-mono text-slate-200 font-semibold">
+                    <span className="text-[10px] font-mono text-slate-500 uppercase block">PII Privacy Control System</span>
+                    <span className="text-xs font-mono text-slate-800 font-semibold">
                       {isPIIUnmasked ? selectedCase.piiData.raw : selectedCase.piiData.masked}
                     </span>
                     {isPIIUnmasked && (
-                      <span className="text-[9px] text-amber-400 block font-mono">⚠️ Expiring: {unmaskTimeLeft}</span>
+                      <span className="text-[9px] text-amber-600 block font-mono">⚠️ Expiring: {unmaskTimeLeft}</span>
                     )}
                   </div>
                   
@@ -198,21 +198,21 @@ export default function Cases() {
                 </div>
 
                 {/* SOAR Containment Playbooks */}
-                <div className="space-y-4 pt-4 border-t border-[rgba(255,255,255,0.06)]">
-                  <h3 className="text-sm font-bold text-slate-200">Recommended Autonomic containment Playbooks</h3>
+                <div className="space-y-4 pt-4 border-t border-slate-200">
+                  <h3 className="text-sm font-bold text-slate-800">Recommended Autonomic containment Playbooks</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {selectedCase.playbooks.map((playbook, idx) => (
-                      <div key={idx} className="p-4 rounded-lg bg-black/30 border border-slate-800 flex flex-col justify-between gap-3">
+                      <div key={idx} className="p-4 rounded-lg bg-slate-50 border border-slate-200 flex flex-col justify-between gap-3">
                         <div className="space-y-1">
                           <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold text-slate-200">{playbook.name}</span>
+                            <span className="text-xs font-bold text-slate-800">{playbook.name}</span>
                             <span className={`px-1.5 py-0.5 rounded text-[8px] font-mono font-bold ${
-                              playbook.impact === "HIGH" ? "bg-rose-950/20 text-rose-400 border border-rose-500/20" : "bg-amber-950/20 text-amber-400 border border-amber-500/20"
+                              playbook.impact === "HIGH" ? "bg-rose-50 text-rose-600 border border-rose-200" : "bg-amber-50 text-amber-600 border border-amber-200"
                             }`}>
                               IMPACT: {playbook.impact}
                             </span>
                           </div>
-                          <p className="text-[11px] text-slate-400 font-mono">{playbook.action}</p>
+                          <p className="text-[11px] text-slate-500 font-mono">{playbook.action}</p>
                         </div>
                         
                         <button
@@ -227,7 +227,7 @@ export default function Cases() {
                   </div>
 
                   {playbookLogs.length > 0 && (
-                    <div className="bg-black/70 border border-slate-900 rounded p-4 font-mono text-[10px] text-cyan-400 space-y-1.5 max-h-[150px] overflow-y-auto">
+                    <div className="bg-[#0f172a] border border-slate-800 rounded p-4 font-mono text-[10px] text-cyan-400 space-y-1.5 max-h-[150px] overflow-y-auto">
                       {playbookLogs.map((log, idx) => (
                         <div key={idx} className="flex gap-2">
                           <span>&gt;</span>
@@ -241,7 +241,7 @@ export default function Cases() {
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center py-20">
                 <span className="text-4xl mb-4">🎟️</span>
-                <h3 className="text-sm font-bold text-slate-300">Select a Ticket</h3>
+                <h3 className="text-sm font-bold text-slate-600">Select a Ticket</h3>
                 <p className="text-xs text-slate-500 mt-1 max-w-[240px]">
                   Select an incident ticket from the board to access its evidence pin canvas and initiate containment actions.
                 </p>
@@ -253,26 +253,26 @@ export default function Cases() {
 
       {/* Human-in-the-Loop Containment Approval Modal */}
       {showApprovalModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="glass-panel max-w-md w-full p-6 border-glow-danger space-y-6">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="glass-panel max-w-md w-full p-6 border-glow-danger space-y-6 bg-white">
             <div className="space-y-2">
               <span className="text-3xl">⚠️</span>
-              <h2 className="text-lg font-extrabold text-rose-400 uppercase tracking-wide">
+              <h2 className="text-lg font-extrabold text-rose-600 uppercase tracking-wide">
                 Containment Action Authorization Request
               </h2>
-              <p className="text-xs text-slate-300">
-                This SOAR playbook step has a <span className="text-rose-400 font-bold">HIGH IMPACT</span> rating and demands physical administrative approval before execution.
+              <p className="text-xs text-slate-700">
+                This SOAR playbook step has a <span className="text-rose-600 font-bold">HIGH IMPACT</span> rating and demands physical administrative approval before execution.
               </p>
             </div>
 
-            <div className="p-4 bg-black/40 border border-slate-900 rounded font-mono text-xs text-slate-300 space-y-2">
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded font-mono text-xs text-slate-700 space-y-2">
               <div>
-                <span className="text-slate-500 block text-[9px] uppercase">TARGET ACTION</span>
-                <span className="text-slate-200 font-semibold">{activePlaybookStep.name}</span>
+                <span className="text-slate-400 block text-[9px] uppercase font-bold">TARGET ACTION</span>
+                <span className="text-slate-800 font-semibold">{activePlaybookStep.name}</span>
               </div>
               <div>
-                <span className="text-slate-500 block text-[9px] uppercase">CONTAINMENT INTERFACE CALL</span>
-                <span className="text-cyan-400 text-[10px] break-all">{activePlaybookStep.action}</span>
+                <span className="text-slate-400 block text-[9px] uppercase font-bold">CONTAINMENT INTERFACE CALL</span>
+                <span className="text-cyan-700 text-[10px] break-all">{activePlaybookStep.action}</span>
               </div>
             </div>
 

@@ -59,21 +59,21 @@ export default function RootLayout({ children }) {
         <meta name="description" content="Sentinel-Chronicle Hybrid Air-Gapped SecOps Console" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
-      <body className="min-h-screen bg-[#08090d] text-[#f1f3f9] font-sans antialiased overflow-hidden flex">
-        {/* Microsoft Sentinel Style Sidebar */}
-        <aside className="w-72 border-r border-[rgba(255,255,255,0.05)] bg-[#0d0f14] flex flex-col h-screen shrink-0 z-30 select-none">
+      <body className="min-h-screen bg-[#f4f6f9] text-[#0f172a] font-sans antialiased overflow-hidden flex">
+        {/* Microsoft Sentinel Style Sidebar in Light Theme */}
+        <aside className="w-72 border-r border-slate-200 bg-white flex flex-col h-screen shrink-0 z-30 select-none">
           {/* Brand header */}
-          <div className="p-6 border-b border-[rgba(255,255,255,0.05)] flex items-center justify-between">
+          <div className="p-6 border-b border-slate-200 flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xl font-extrabold tracking-wider bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">
+                <span className="text-xl font-extrabold tracking-wider bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
                   uSecOps
                 </span>
-                <span className="text-[9px] font-mono border border-sky-500/20 text-sky-400 px-1 py-0.2 rounded uppercase bg-sky-950/15">
+                <span className="text-[9px] font-mono border border-sky-500/30 text-sky-600 px-1 py-0.2 rounded uppercase bg-sky-50">
                   SEC-OS
                 </span>
               </div>
-              <p className="text-[9px] font-mono text-slate-500 mt-1 uppercase tracking-wider">
+              <p className="text-[9px] font-mono text-slate-400 mt-1 uppercase tracking-wider">
                 Consolidated Security Console
               </p>
             </div>
@@ -83,7 +83,7 @@ export default function RootLayout({ children }) {
           <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
             {navigationSections.map((section, idx) => (
               <div key={idx} className="space-y-1.5">
-                <h3 className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                   {section.title}
                 </h3>
                 <div className="space-y-0.5">
@@ -95,8 +95,8 @@ export default function RootLayout({ children }) {
                         href={item.path}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded text-xs font-semibold transition-all duration-150 ${
                           isActive
-                            ? "bg-sky-500/8 text-sky-400 border-l-2 border-sky-400"
-                            : "text-slate-400 hover:text-slate-200 hover:bg-white/2"
+                            ? "bg-sky-50 text-sky-600 border-l-2 border-sky-500"
+                            : "text-slate-600 hover:text-black hover:bg-slate-50"
                         }`}
                       >
                         <span className="text-sm">{item.icon}</span>
@@ -110,14 +110,14 @@ export default function RootLayout({ children }) {
           </nav>
 
           {/* Appliance Status */}
-          <div className="p-4 border-t border-[rgba(255,255,255,0.05)] bg-[#0a0b0e] space-y-2 font-mono text-[10px]">
+          <div className="p-4 border-t border-slate-200 bg-slate-50 space-y-2 font-mono text-[10px]">
             <div className="flex justify-between items-center text-slate-500">
               <span>Security State:</span>
-              <span className="text-emerald-400 font-bold uppercase tracking-wider">AIR-GAPPED</span>
+              <span className="text-emerald-600 font-bold uppercase tracking-wider">AIR-GAPPED</span>
             </div>
             <div className="flex justify-between items-center text-slate-500">
               <span>Consensus Quorum:</span>
-              <span className="text-sky-400">3/3 ACTIVE</span>
+              <span className="text-sky-600 font-bold">3/3 ACTIVE</span>
             </div>
           </div>
         </aside>
@@ -125,10 +125,10 @@ export default function RootLayout({ children }) {
         {/* Right Workspace Shell */}
         <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
           {/* Header - Google Chronicle style Search Bar */}
-          <header className="h-16 border-b border-[rgba(255,255,255,0.05)] bg-[#0d0f14] flex items-center justify-between px-8 z-20">
+          <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-8 z-20">
             {/* Center: Global Google Chronicle search bar */}
             <form onSubmit={handleSearchSubmit} className="chronicle-search-container">
-              <span className="absolute left-4 top-2.5 text-slate-500 text-sm">🔍</span>
+              <span className="absolute left-4 top-2.5 text-slate-400 text-sm">🔍</span>
               <input
                 type="text"
                 placeholder="Search raw logs, assets, IP addresses, domains, or virtual entity UUIDs..."
@@ -140,7 +140,7 @@ export default function RootLayout({ children }) {
 
             {/* Profile Info */}
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 px-3 py-1 rounded bg-[#13161c] border border-slate-800 text-[10px] font-mono text-slate-300">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono text-slate-700">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                 <span>ROLE: ADMIN_SOC_LEAD</span>
               </div>
@@ -148,7 +148,7 @@ export default function RootLayout({ children }) {
           </header>
 
           {/* Page Viewport */}
-          <main className="flex-1 overflow-y-auto p-8 relative bg-[#08090d]">
+          <main className="flex-1 overflow-y-auto p-8 relative bg-[#f4f6f9]">
             {children}
           </main>
         </div>

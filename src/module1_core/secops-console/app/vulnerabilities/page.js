@@ -69,10 +69,10 @@ export default function Vulnerabilities() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
           Mythos AI & Vulnerability Center
         </h1>
-        <p className="text-slate-400 text-sm mt-1">
+        <p className="text-slate-500 text-sm mt-1">
           Local, self-hosted LLM defending assets by mapping active exploit reachability and synthesizing configuration hotfixes.
         </p>
       </div>
@@ -80,45 +80,45 @@ export default function Vulnerabilities() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Vulnerability Table list */}
         <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-lg font-bold text-slate-200">Local Vulnerability Registry</h2>
+          <h2 className="text-lg font-bold text-slate-800">Local Vulnerability Registry</h2>
           <div className="space-y-4">
             {vulnerabilities.map((vuln) => {
               const isActive = vuln.reachability === "ACTIVE_EXPOSURE";
               const isResolved = vuln.reachability === "RESOLVED";
               
               const reachBg = 
-                isResolved ? "bg-emerald-950/20 text-emerald-400 border-emerald-500/30" :
-                isActive ? "bg-rose-950/20 text-rose-400 border-rose-500/30" : 
-                "bg-slate-900/30 text-slate-400 border-slate-800";
+                isResolved ? "bg-emerald-50 text-emerald-600 border-emerald-200" :
+                isActive ? "bg-rose-50 text-rose-600 border-rose-200" : 
+                "bg-slate-50 text-slate-600 border-slate-200";
 
               return (
                 <div
                   key={vuln.cve}
                   onClick={() => setSelectedVuln(vuln)}
                   className={`p-5 rounded-lg border cursor-pointer glass-panel ${
-                    selectedVuln?.cve === vuln.cve ? "border-violet-500 bg-violet-950/10" : "border-slate-800"
+                    selectedVuln?.cve === vuln.cve ? "border-violet-500 bg-violet-50/60" : "border-slate-200"
                   }`}
                 >
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono font-bold text-cyan-400">{vuln.cve}</span>
+                        <span className="text-xs font-mono font-bold text-cyan-600">{vuln.cve}</span>
                         <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${reachBg}`}>
                           {vuln.reachability}
                         </span>
                       </div>
-                      <h3 className="text-base font-bold text-slate-200 mt-1">{vuln.title}</h3>
-                      <p className="text-xs text-slate-400 font-mono">Affected package: {vuln.package}</p>
+                      <h3 className="text-base font-bold text-slate-800 mt-1">{vuln.title}</h3>
+                      <p className="text-xs text-slate-500 font-mono">Affected package: {vuln.package}</p>
                     </div>
 
                     <div className="flex items-center gap-6 font-mono text-center shrink-0">
                       <div>
-                        <span className="text-[9px] text-slate-500 block">STATIC SEVERITY</span>
-                        <span className="text-sm font-bold text-slate-300">{vuln.staticSeverity.toFixed(1)}</span>
+                        <span className="text-[9px] text-slate-400 block font-bold">STATIC SEVERITY</span>
+                        <span className="text-sm font-bold text-slate-700">{vuln.staticSeverity.toFixed(1)}</span>
                       </div>
-                      <div className="border-l border-slate-800 pl-6">
-                        <span className="text-[9px] text-slate-500 block">REACHABILITY SCORE</span>
-                        <span className={`text-sm font-extrabold ${isResolved ? "text-emerald-400" : isActive ? "text-rose-400" : "text-slate-400"}`}>
+                      <div className="border-l border-slate-200 pl-6">
+                        <span className="text-[9px] text-slate-400 block font-bold">REACHABILITY SCORE</span>
+                        <span className={`text-sm font-extrabold ${isResolved ? "text-emerald-600" : isActive ? "text-rose-600" : "text-slate-500"}`}>
                           {vuln.reachabilityScore.toFixed(1)}
                         </span>
                       </div>
@@ -137,32 +137,32 @@ export default function Vulnerabilities() {
               <div className="space-y-6 flex-1 flex flex-col justify-between">
                 <div className="space-y-4">
                   <div>
-                    <span className="text-xs font-mono text-cyan-400 font-bold">{selectedVuln.cve}</span>
-                    <h3 className="text-lg font-bold text-slate-200 mt-0.5">{selectedVuln.title}</h3>
+                    <span className="text-xs font-mono text-cyan-600 font-bold">{selectedVuln.cve}</span>
+                    <h3 className="text-lg font-bold text-slate-800 mt-0.5">{selectedVuln.title}</h3>
                   </div>
 
-                  <p className="text-xs text-slate-300 leading-relaxed bg-black/30 p-3 rounded border border-slate-900">
+                  <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-3 rounded border border-slate-200">
                     {selectedVuln.description}
                   </p>
 
                   <div className="space-y-2">
-                    <span className="text-[10px] font-mono text-slate-500 uppercase block">Reachability Audit Analysis</span>
-                    <p className="text-xs text-slate-300 leading-relaxed italic border-l-2 border-violet-500 pl-3">
+                    <span className="text-[10px] font-mono text-slate-400 uppercase block font-bold">Reachability Audit Analysis</span>
+                    <p className="text-xs text-slate-700 leading-relaxed italic border-l-2 border-violet-500 pl-3">
                       {selectedVuln.analysis}
                     </p>
                   </div>
 
                   {selectedVuln.reachability !== "UNREACHABLE" && (
                     <div className="space-y-2">
-                      <span className="text-[10px] font-mono text-slate-500 uppercase block">Synthesized hotfix Patch</span>
-                      <pre className="p-3 bg-black/60 border border-slate-900 rounded font-mono text-[9px] text-cyan-300/90 overflow-x-auto whitespace-pre">
+                      <span className="text-[10px] font-mono text-slate-400 uppercase block font-bold">Synthesized hotfix Patch</span>
+                      <pre className="p-3 bg-[#0f172a] border border-slate-800 rounded font-mono text-[9px] text-cyan-300/90 overflow-x-auto whitespace-pre">
                         {selectedVuln.patchCode}
                       </pre>
                     </div>
                   )}
                 </div>
 
-                <div className="pt-4 border-t border-[rgba(255,255,255,0.06)] space-y-4">
+                <div className="pt-4 border-t border-slate-200 space-y-4">
                   {selectedVuln.reachability === "ACTIVE_EXPOSURE" && (
                     <button
                       onClick={() => handleApplyPatch(selectedVuln)}
@@ -174,19 +174,19 @@ export default function Vulnerabilities() {
                   )}
 
                   {selectedVuln.reachability === "RESOLVED" && (
-                    <div className="text-center text-xs font-mono font-bold text-emerald-400 uppercase py-2 bg-emerald-950/20 border border-emerald-500/30 rounded">
+                    <div className="text-center text-xs font-mono font-bold text-emerald-600 uppercase py-2 bg-emerald-50 border border-emerald-200 rounded">
                       ✅ Vulnerability Patched
                     </div>
                   )}
 
                   {selectedVuln.reachability === "UNREACHABLE" && (
-                    <div className="text-center text-xs font-mono font-bold text-slate-400 uppercase py-2 bg-slate-900/30 border border-slate-800 rounded">
+                    <div className="text-center text-xs font-mono font-bold text-slate-500 uppercase py-2 bg-slate-50 border border-slate-200 rounded">
                       🔒 No Exposure Patch Required
                     </div>
                   )}
 
                   {patchLogs.length > 0 && (
-                    <div className="bg-black/50 p-3 rounded border border-slate-900 text-[10px] font-mono text-cyan-400 space-y-1.5 max-h-[120px] overflow-y-auto">
+                    <div className="bg-[#0f172a] p-3 rounded border border-slate-800 text-[10px] font-mono text-cyan-400 space-y-1.5 max-h-[120px] overflow-y-auto">
                       {patchLogs.map((log, idx) => (
                         <div key={idx} className="flex gap-1.5">
                           <span>&gt;</span>
@@ -200,7 +200,7 @@ export default function Vulnerabilities() {
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center py-16">
                 <span className="text-4xl mb-4">🧠</span>
-                <h3 className="text-sm font-bold text-slate-300">Exploit Reachability Details</h3>
+                <h3 className="text-sm font-bold text-slate-600">Exploit Reachability Details</h3>
                 <p className="text-xs text-slate-500 mt-1 max-w-[200px]">
                   Select a vulnerability to verify active path reachability and review AI-synthesized patches.
                 </p>

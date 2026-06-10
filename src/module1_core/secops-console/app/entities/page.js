@@ -52,24 +52,24 @@ export default function EntityDemux() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
           Virtual Entity Demultiplexing Map
         </h1>
-        <p className="text-slate-400 text-sm mt-1">
+        <p className="text-slate-500 text-sm mt-1">
           Resolving log duplication across hypervisor infrastructures by mapping telemetry to static, isolated composite keys.
         </p>
       </div>
 
       {/* Concept Alert Banner */}
-      <div className="glass-panel p-4 bg-violet-950/20 border-violet-500/30 flex items-start gap-4">
+      <div className="glass-panel p-4 bg-violet-50 border border-violet-200 flex items-start gap-4">
         <span className="text-2xl mt-0.5">ℹ️</span>
-        <div className="text-sm text-slate-300 space-y-1">
-          <p className="font-semibold text-slate-200">The Virtual Entity Concept</p>
+        <div className="text-sm text-slate-700 space-y-1">
+          <p className="font-semibold text-slate-800">The Virtual Entity Concept</p>
           <p>
             Traditional agents cluster logs per VM host, creating duplication when a single VM runs multiple distinct security containers. 
             uSecOps demultiplexes incoming streams by mapping them to an immutable 3-part composite key:
           </p>
-          <div className="bg-black/40 p-2.5 rounded font-mono text-cyan-400 mt-2 inline-block border border-slate-800">
+          <div className="bg-slate-50 p-2.5 rounded font-mono text-cyan-700 mt-2 inline-block border border-slate-200">
             Virtual Entity ID = [Hypervisor Type] + [Host VM UUID] + [Application Instance ID]
           </div>
         </div>
@@ -79,13 +79,13 @@ export default function EntityDemux() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Entity Node Selector */}
         <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-lg font-bold text-slate-200">Active Virtual Host Clusters</h2>
+          <h2 className="text-lg font-bold text-slate-800">Active Virtual Host Clusters</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {virtualEntities.map((entity) => {
               const ratingColor = 
-                entity.threatRating === "CRITICAL" ? "border-rose-500/30 bg-rose-950/20 hover:border-rose-500 text-rose-300" :
-                entity.threatRating === "HIGH" ? "border-amber-500/30 bg-amber-950/20 hover:border-amber-500 text-amber-300" :
-                "border-slate-800 bg-black/30 hover:border-violet-500/50 text-slate-200";
+                entity.threatRating === "CRITICAL" ? "border-rose-200 bg-rose-50 hover:border-rose-500 text-rose-700" :
+                entity.threatRating === "HIGH" ? "border-amber-200 bg-amber-50 hover:border-amber-500 text-amber-700" :
+                "border-slate-200 bg-slate-50 hover:border-violet-500/50 text-slate-800";
 
               return (
                 <div
@@ -95,15 +95,15 @@ export default function EntityDemux() {
                 >
                   <div className="space-y-2">
                     <div className="flex justify-between items-center text-[10px] font-mono">
-                      <span className="text-cyan-400 font-semibold">{entity.hypervisor}</span>
+                      <span className="text-cyan-600 font-semibold">{entity.hypervisor}</span>
                       <span className="font-bold">{entity.status}</span>
                     </div>
                     <h3 className="text-sm font-bold truncate mt-2">{entity.appId}</h3>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-[rgba(255,255,255,0.06)] flex justify-between items-center text-[11px] font-mono text-slate-400">
+                  <div className="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center text-[11px] font-mono text-slate-500">
                     <span>IP: {entity.ip}</span>
-                    <span className="text-slate-300">{entity.logsProcessed} logs</span>
+                    <span className="text-slate-600">{entity.logsProcessed} logs</span>
                   </div>
                 </div>
               );
@@ -117,43 +117,43 @@ export default function EntityDemux() {
             {selectedEntity ? (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-200">Composite Key Details</h3>
-                  <p className="text-xs text-slate-400 mt-1">Decoded payload parameters</p>
+                  <h3 className="text-lg font-bold text-slate-800">Composite Key Details</h3>
+                  <p className="text-xs text-slate-500 mt-1">Decoded payload parameters</p>
                 </div>
 
                 <div className="space-y-4 font-mono text-xs">
                   <div>
-                    <span className="text-slate-400 block text-[10px] uppercase">Hypervisor Cluster</span>
-                    <span className="text-slate-200 font-semibold text-sm">{selectedEntity.hypervisor}</span>
+                    <span className="text-slate-500 block text-[10px] uppercase">Hypervisor Cluster</span>
+                    <span className="text-slate-800 font-semibold text-sm">{selectedEntity.hypervisor}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[10px] uppercase">VM UUID (Hardware)</span>
-                    <span className="text-cyan-400 font-semibold break-all text-xs">{selectedEntity.uuid}</span>
+                    <span className="text-slate-500 block text-[10px] uppercase">VM UUID (Hardware)</span>
+                    <span className="text-cyan-700 font-semibold break-all text-xs">{selectedEntity.uuid}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[10px] uppercase">Application Instance scope</span>
-                    <span className="text-violet-300 font-semibold text-sm">{selectedEntity.appId}</span>
+                    <span className="text-slate-500 block text-[10px] uppercase">Application Instance scope</span>
+                    <span className="text-violet-600 font-semibold text-sm">{selectedEntity.appId}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[10px] uppercase">IP Address</span>
-                    <span className="text-slate-200 font-semibold">{selectedEntity.ip}</span>
+                    <span className="text-slate-500 block text-[10px] uppercase">IP Address</span>
+                    <span className="text-slate-800 font-semibold">{selectedEntity.ip}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[10px] uppercase">Threat Severity Rating</span>
-                    <span className={`font-semibold ${selectedEntity.threatRating === "CRITICAL" ? "text-rose-400" : "text-amber-400"}`}>
+                    <span className="text-slate-500 block text-[10px] uppercase">Threat Severity Rating</span>
+                    <span className={`font-semibold ${selectedEntity.threatRating === "CRITICAL" ? "text-rose-600" : "text-amber-600"}`}>
                       {selectedEntity.threatRating}
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-black/50 p-3 rounded border border-slate-800 font-mono text-[10px] text-cyan-400/80 break-all select-all">
+                <div className="bg-slate-50 p-3 rounded border border-slate-200 font-mono text-[10px] text-cyan-700 break-all select-all">
                   Composite Key:<br/>{selectedEntity.id}
                 </div>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center py-12">
                 <span className="text-4xl mb-4">🔍</span>
-                <h3 className="text-sm font-bold text-slate-300">Select an Entity</h3>
+                <h3 className="text-sm font-bold text-slate-600">Select an Entity</h3>
                 <p className="text-xs text-slate-500 mt-1 max-w-[200px]">
                   Click on any virtual host cluster to decode its composite log-demultiplexing registry key.
                 </p>

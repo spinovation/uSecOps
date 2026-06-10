@@ -1,22 +1,22 @@
-/* Sentinel-Chronicle Hybrid Design System - uSecOps */
+/* Sentinel-Chronicle Hybrid Light Theme Design System - uSecOps */
 @import "tailwindcss";
 
 :root {
-  --background: #0b0c10;
-  --foreground: #f1f3f9;
+  --background: #f4f6f9;             /* Soft light-grey background */
+  --foreground: #0f172a;             /* Dark slate text */
   
-  /* Sentinel Dark Corporate Palette */
-  --cyber-primary: 217 90% 60%;     /* Microsoft Sky Blue */
-  --cyber-secondary: 262 80% 60%;   /* Chronicle Cyber Violet */
-  --cyber-success: 145 80% 45%;     /* Active Laser Green */
-  --cyber-warning: 38 95% 55%;      /* Warning Orange */
-  --cyber-danger: 354 85% 52%;      /* Alert Crimson */
-  --cyber-info: 200 90% 45%;        /* Cyan Blue */
+  /* Sentinel Corporate Colors adapted for high legibility on light background */
+  --cyber-primary: 217 90% 45%;     /* Sky Blue */
+  --cyber-secondary: 262 70% 45%;   /* Cyber Violet */
+  --cyber-success: 145 80% 30%;     /* Dark Laser Green */
+  --cyber-warning: 38 90% 40%;      /* Warning Orange */
+  --cyber-danger: 354 85% 45%;      /* Alert Crimson */
+  --cyber-info: 200 85% 40%;        /* Cyan Blue */
   
-  /* Enterprise UI Panels */
-  --panel-bg: rgba(20, 22, 30, 0.7);
-  --panel-border: rgba(255, 255, 255, 0.05);
-  --panel-hover: rgba(139, 92, 246, 0.08);
+  /* Enterprise Light UI Panels */
+  --panel-bg: rgba(255, 255, 255, 0.9);
+  --panel-border: rgba(15, 23, 42, 0.08);
+  --panel-hover: rgba(99, 102, 241, 0.04);
   --glass-blur: 16px;
   
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
@@ -28,7 +28,7 @@
   margin: 0;
   padding: 0;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
 }
 
 /* Custom Scrollbars */
@@ -40,11 +40,11 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.08);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: hsla(217, 90%, 60%, 0.3);
+  background: hsla(217, 90%, 45%, 0.3);
 }
 
 body {
@@ -54,8 +54,8 @@ body {
   min-height: 100vh;
   overflow: hidden;
   background-image: 
-    radial-gradient(at 0% 0%, rgba(30, 41, 59, 0.3) 0, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.05) 0, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(226, 232, 240, 0.6) 0, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.03) 0, transparent 50%);
 }
 
 /* Master Enterprise Panel Class */
@@ -64,13 +64,15 @@ body {
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--panel-border);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
   border-radius: 8px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .enterprise-panel:hover {
-  border-color: rgba(99, 102, 241, 0.2);
-  background: rgba(25, 28, 40, 0.85);
+  border-color: rgba(99, 102, 241, 0.3);
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
 }
 
 /* Chronicle Global Search Wrapper */
@@ -82,9 +84,9 @@ body {
 
 .chronicle-search-input {
   width: 100%;
-  background: rgba(15, 17, 23, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--foreground);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  color: #0f172a;
   padding: 10px 16px 10px 42px;
   border-radius: 20px;
   font-size: 0.85rem;
@@ -96,7 +98,11 @@ body {
   outline: none;
   border-color: hsl(var(--cyber-primary));
   box-shadow: 0 0 12px rgba(56, 189, 248, 0.15);
-  background: rgba(15, 17, 23, 0.95);
+  background: #ffffff;
+}
+
+.chronicle-search-input::placeholder {
+  color: #64748b;
 }
 
 /* Microsoft Sentinel Metric Indicators */
@@ -121,8 +127,8 @@ body {
 /* Geovelocity Vector Maps */
 .geovelocity-visualizer {
   position: relative;
-  background: #08090d;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 8px;
   overflow: hidden;
   height: 200px;
@@ -139,8 +145,8 @@ body {
 /* Action Button */
 .btn-sentinel {
   background: rgba(56, 189, 248, 0.08);
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  color: #0284c7;
   padding: 6px 12px;
   border-radius: 4px;
   font-size: 0.75rem;
@@ -152,27 +158,27 @@ body {
 
 .btn-sentinel:hover {
   background: rgba(56, 189, 248, 0.2);
-  border-color: #38bdf8;
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+  border-color: #0284c7;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
 }
 
 /* Severity Labels */
 .badge-critical {
-  background: rgba(239, 68, 68, 0.1);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.25);
 }
 
 .badge-high {
-  background: rgba(245, 158, 11, 0.1);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.25);
 }
 
 .badge-medium {
-  background: rgba(59, 130, 246, 0.1);
-  color: #60a5fa;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+  border: 1px solid rgba(59, 130, 246, 0.25);
 }
 
 /* Enterprise Data Grid Matrix */
@@ -185,20 +191,95 @@ body {
 .enterprise-grid th {
   text-align: left;
   padding: 10px 14px;
-  border-b: 1px solid rgba(255, 255, 255, 0.08);
-  color: #94a3b8;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  color: #475569;
   font-weight: 600;
   text-transform: uppercase;
   font-size: 0.7rem;
   letter-spacing: 0.05em;
+  background: #f8fafc;
 }
 
 .enterprise-grid td {
   padding: 12px 14px;
-  border-b: 1px solid rgba(255, 255, 255, 0.03);
-  color: #cbd5e1;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.04);
+  color: #1e293b;
 }
 
 .enterprise-grid tr:hover td {
-  background: rgba(255, 255, 255, 0.015);
+  background: rgba(0, 0, 0, 0.01);
+}
+
+/* Glass Panel definition */
+.glass-panel {
+  background: var(--panel-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--panel-border);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+/* Glass Buttons */
+.btn-glass {
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  color: #0f172a;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-glass:hover:not(:disabled) {
+  background: rgba(15, 23, 42, 0.08);
+  border-color: rgba(15, 23, 42, 0.2);
+}
+
+.btn-glass:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-glass-danger {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #dc2626;
+}
+
+.btn-glass-danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #dc2626;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.1);
+}
+
+.btn-glass-success {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #059669;
+}
+
+.btn-glass-success:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: #059669;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+}
+
+/* Danger Border Glow */
+.border-glow-danger {
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.15) !important;
 }
