@@ -194,7 +194,9 @@ export default function RootLayout({ children }) {
 
           {/* Page Viewport */}
           <main className="flex-1 overflow-y-auto p-8 relative bg-[#f4f6f9]">
-            {children}
+            <div className="max-w-7xl mx-auto w-full">
+              {children}
+            </div>
           </main>
         </div>
       </body>
