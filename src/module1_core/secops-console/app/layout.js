@@ -25,25 +25,70 @@ export default function RootLayout({ children }) {
     {
       title: "Operations",
       items: [
-        { name: "Overview Dashboard", path: "/", icon: "📊" },
-        { name: "Incident Cases (SOAR)", path: "/cases", icon: "🎟️" },
-        { name: "Virtual Entity Demux", path: "/entities", icon: "🌐" }
+        { name: "Overview Dashboard", path: "/", icon: "dashboard" },
+        { name: "Incident Cases (SOAR)", path: "/cases", icon: "cases" },
+        { name: "Virtual Entity Demux", path: "/entities", icon: "entities" }
       ]
     },
     {
       title: "Analytics & Detections",
       items: [
-        { name: "Mythos AI & Vulns", path: "/vulnerabilities", icon: "🧠" }
+        { name: "Mythos AI & Vulns", path: "/vulnerabilities", icon: "ai" }
       ]
     },
     {
       title: "Appliance Management",
       items: [
-        { name: "OTA Upgrade Server", path: "/upgrades", icon: "🛡️" },
-        { name: "Self-Auditing Log", path: "/audit", icon: "🔌" }
+        { name: "OTA Upgrade Server", path: "/upgrades", icon: "upgrades" },
+        { name: "Self-Auditing Log", path: "/audit", icon: "audit" }
       ]
     }
   ];
+
+  const renderIcon = (iconType, isActive) => {
+    const colorClass = isActive ? "text-sky-600" : "text-slate-400 group-hover:text-slate-600";
+    
+    switch (iconType) {
+      case "dashboard":
+        return (
+          <svg className={`w-4 h-4 ${colorClass}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+          </svg>
+        );
+      case "cases":
+        return (
+          <svg className={`w-4 h-4 ${colorClass}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        );
+      case "entities":
+        return (
+          <svg className={`w-4 h-4 ${colorClass}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+          </svg>
+        );
+      case "ai":
+        return (
+          <svg className={`w-4 h-4 ${colorClass}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+        );
+      case "upgrades":
+        return (
+          <svg className={`w-4 h-4 ${colorClass}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+        );
+      case "audit":
+        return (
+          <svg className={`w-4 h-4 ${colorClass}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -69,11 +114,11 @@ export default function RootLayout({ children }) {
                 <span className="text-xl font-extrabold tracking-wider bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
                   uSecOps
                 </span>
-                <span className="text-[9px] font-mono border border-sky-500/30 text-sky-600 px-1 py-0.2 rounded uppercase bg-sky-50">
+                <span className="text-[9px] font-mono border border-sky-500/30 text-sky-600 px-1.5 py-0.2 rounded uppercase bg-sky-50 font-bold">
                   SEC-OS
                 </span>
               </div>
-              <p className="text-[9px] font-mono text-slate-400 mt-1 uppercase tracking-wider">
+              <p className="text-[9px] font-mono text-slate-400 mt-1 uppercase tracking-wider font-bold">
                 Consolidated Security Console
               </p>
             </div>
@@ -93,13 +138,13 @@ export default function RootLayout({ children }) {
                       <Link
                         key={item.path}
                         href={item.path}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded text-xs font-semibold transition-all duration-150 ${
+                        className={`group flex items-center gap-3 px-3 py-2.5 rounded text-xs font-semibold transition-all duration-150 ${
                           isActive
                             ? "bg-sky-50 text-sky-600 border-l-2 border-sky-500"
                             : "text-slate-600 hover:text-black hover:bg-slate-50"
                         }`}
                       >
-                        <span className="text-sm">{item.icon}</span>
+                        {renderIcon(item.icon, isActive)}
                         <span>{item.name}</span>
                       </Link>
                     );
