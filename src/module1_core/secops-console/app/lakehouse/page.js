@@ -6,12 +6,9 @@ export default function Lakehouse() {
   const [ingestionRate, setIngestionRate] = useState(5120);
   const [storageUsed, setStorageUsed] = useState(86.42);
   const [retentionDays, setRetentionDays] = useState(365);
-  
-  // Selected drill-down Data Mart
   const [selectedMart, setSelectedMart] = useState("unstructured");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Dynamic ingestion rates fluctuation
   useEffect(() => {
     const interval = setInterval(() => {
       setIngestionRate(prev => Math.floor(prev + (Math.random() * 400 - 200)));
@@ -20,79 +17,110 @@ export default function Lakehouse() {
     return () => clearInterval(interval);
   }, []);
 
-  // Schemas metadata
+  // Detailed schemas and fields for the 8 specific data sources
   const schemas = {
     unstructured: {
       name: "Unstructured Raw Logs",
       dbTable: "clickhouse.raw_logs",
-      count: "~12,482,091 rows",
+      count: "12.4M rows",
       eps: "2,400 EPS",
-      description: "Stores raw, unparsed syslog streams, event dump JSON payloads, and unclassified text outputs forwarded from agents.",
+      description: "Raw syslog payloads and unparsed agent event outputs.",
       columns: [
-        { name: "timestamp", type: "DateTime", desc: "Ingestion timestamp on the Lakehouse server" },
-        { name: "source_ip", type: "String (IPv4/IPv6)", desc: "Originating host IP address" },
-        { name: "log_level", type: "Enum('INFO', 'WARN', 'ERROR')", desc: "Extracted log priority marker" },
-        { name: "raw_payload", type: "String", desc: "Full text block of the raw unparsed message" }
+        { name: "timestamp", type: "DateTime", desc: "Ingestion time" },
+        { name: "source_ip", type: "String", desc: "Origin host IP" },
+        { name: "payload", type: "String", desc: "Raw unparsed text string" }
+      ]
+    },
+    windows: {
+      name: "Windows Events",
+      dbTable: "postgres.windows_logs",
+      count: "4.8M rows",
+      eps: "950 EPS",
+      description: "Active Directory, Kerberos authentications, and PowerShell audits.",
+      columns: [
+        { name: "timestamp", type: "DateTime", desc: "Event log time" },
+        { name: "event_id", type: "Int32", desc: "Windows Security Event ID" },
+        { name: "hostname", type: "String", desc: "Endpoint host name" },
+        { name: "user_principal", type: "String", desc: "Target user identity" }
+      ]
+    },
+    linux: {
+      name: "Linux Syslog",
+      dbTable: "postgres.linux_logs",
+      count: "3.2M rows",
+      eps: "680 EPS",
+      description: "SSH logons, systemd processes, and daemon events.",
+      columns: [
+        { name: "timestamp", type: "DateTime", desc: "System event time" },
+        { name: "pid", type: "Int32", desc: "Process Identifier" },
+        { name: "process", type: "String", desc: "Daemon or service name" },
+        { name: "message", type: "String", desc: "Audit syslog text" }
+      ]
+    },
+    legacy: {
+      name: "Legacy OS (AS400/zOS)",
+      dbTable: "postgres.legacy_logs",
+      count: "1.1M rows",
+      eps: "120 EPS",
+      description: "Mainframe transaction journals and RACF access logs.",
+      columns: [
+        { name: "timestamp", type: "DateTime", desc: "Mainframe transaction time" },
+        { name: "job_id", type: "String", desc: "OS/390 active job identifier" },
+        { name: "user_id", type: "String", desc: "RACF access credential user" },
+        { name: "action", type: "String", desc: "Database transaction statement" }
+      ]
+    },
+    firewall: {
+      name: "Firewall Traffic",
+      dbTable: "postgres.firewall_logs",
+      count: "8.9M rows",
+      eps: "1,800 EPS",
+      description: "Network transit packets, firewall rules, and port states.",
+      columns: [
+        { name: "src_ip", type: "String", desc: "Source network IP" },
+        { name: "dest_ip", type: "String", desc: "Destination network IP" },
+        { name: "dest_port", type: "Int32", desc: "Target connection port" },
+        { name: "action", type: "String", desc: "Action code (ALLOW / DENY)" }
       ]
     },
     identity: {
-      name: "Structured Identity Mart",
-      dbTable: "postgres.identity_logs",
-      count: "942,842 rows",
-      eps: "900 EPS",
-      description: "Parsed database of session authentications, token exchanges, dynamic directory changes, and credential status reports.",
-      columns: [
-        { name: "session_id", type: "UUID", desc: "Unique session tracker identifier" },
-        { name: "user_principal", type: "String", desc: "User email or identity identifier (e.g. sridhargs@spinovation.com)" },
-        { name: "auth_provider", type: "String", desc: "Source authentication mechanism (e.g. AzureAD, Okta, LDAP)" },
-        { name: "auth_status", type: "Enum('SUCCESS', 'FAILED', 'LOCKOUT')", desc: "Outcome of authentication process" },
-        { name: "timestamp", type: "DateTime", desc: "Time validation was completed by identity provider" }
-      ]
-    },
-    flow: {
-      name: "Structured Network Flow Mart",
-      dbTable: "postgres.flow_logs",
-      count: "3,184,920 rows",
-      eps: "1,500 EPS",
-      description: "Aggregated flow records depicting packet transits, connection routes, bytes transferred, and local firewall states.",
-      columns: [
-        { name: "flow_id", type: "Int64", desc: "Unique flow table incremental index" },
-        { name: "src_ip", type: "String", desc: "Source IP address" },
-        { name: "dest_ip", type: "String", desc: "Destination IP address" },
-        { name: "dest_port", type: "Int32", desc: "Target application port" },
-        { name: "protocol", type: "Enum('TCP', 'UDP', 'ICMP')", desc: "Transit network layer protocol" },
-        { name: "bytes_sent", type: "Int64", desc: "Data payload volume in bytes" }
-      ]
-    },
-    software: {
-      name: "Structured Software Inventory",
-      dbTable: "postgres.software_inventory",
-      count: "4,812 rows",
+      name: "Identity Governance",
+      dbTable: "postgres.identity_governance",
+      count: "150K rows",
       eps: "Scheduled Sync",
-      description: "Dynamic catalog of installed agent binary revisions, system dependencies, library paths, and operational applications.",
+      description: "SailPoint IGA, role access changes, and SSO events.",
       columns: [
-        { name: "record_id", type: "Int64", desc: "Unique software registry row ID" },
-        { name: "hostname", type: "String", desc: "Device hostname where software is installed" },
-        { name: "software_name", type: "String", desc: "Common binary or package name (e.g. splunkforwarder, nxlog)" },
-        { name: "version", type: "String", desc: "Version build signature number" },
-        { name: "install_path", type: "String", desc: "File system installation path" },
-        { name: "last_scan_date", type: "DateTime", desc: "Time of last security audit assessment" }
+        { name: "request_id", type: "UUID", desc: "Orchestration ticket UUID" },
+        { name: "user", type: "String", desc: "Employee identity account" },
+        { name: "role_granted", type: "String", desc: "Active directory privilege role" },
+        { name: "approver", type: "String", desc: "Authorizing SOC supervisor" }
       ]
     },
     hardware: {
-      name: "Structured Hardware Inventory",
+      name: "Hardware Inventory",
       dbTable: "postgres.hardware_inventory",
       count: "1,502 rows",
       eps: "Scheduled Sync",
-      description: "Complete asset inventory of CPU layout core architectures, RAM metrics, interface MACs, and device hardware classifications.",
+      description: "Device types, CPU layout, RAM metrics, and MAC addresses.",
       columns: [
-        { name: "device_id", type: "UUID", desc: "Unique asset hardware tracking ID" },
-        { name: "device_type", type: "Enum('SERVER', 'WORKSTATION', 'ROUTER', 'SWITCH', 'FIREWALL')", desc: "Device network hardware tier" },
-        { name: "hostname", type: "String", desc: "Hostname or local name representation" },
-        { name: "ip_address", type: "String", desc: "Primary interface network address" },
-        { name: "cpu_cores", type: "Int32", desc: "Total physical CPU cores" },
-        { name: "memory_gb", type: "Int32", desc: "Installed system memory capacity in GB" },
-        { name: "mac_address", type: "String", desc: "Physical link network adapter MAC address" }
+        { name: "device_id", type: "UUID", desc: "Asset system UUID" },
+        { name: "device_type", type: "String", desc: "Hardware class (SERVER / ROUTER)" },
+        { name: "hostname", type: "String", desc: "Client endpoint hostname" },
+        { name: "cpu_cores", type: "Int32", desc: "Physical processor cores count" },
+        { name: "memory_gb", type: "Int32", desc: "System RAM capacity" }
+      ]
+    },
+    software: {
+      name: "Software Inventory",
+      dbTable: "postgres.software_inventory",
+      count: "4,812 rows",
+      eps: "Scheduled Sync",
+      description: "Installed agent binary versions and local dependency paths.",
+      columns: [
+        { name: "record_id", type: "Int64", desc: "Software package row identifier" },
+        { name: "hostname", type: "String", desc: "Host location hostname" },
+        { name: "software_name", type: "String", desc: "Binary application name" },
+        { name: "version", type: "String", desc: "Binary build version" }
       ]
     }
   };
@@ -100,46 +128,47 @@ export default function Lakehouse() {
   // Mock Rows data
   const mockRows = {
     unstructured: [
-      { timestamp: "10:59:02", source_ip: "10.100.12.45", log_level: "INFO", raw_payload: "INFO: secops-run daemon: heartbeat verified" },
-      { timestamp: "10:59:10", source_ip: "10.100.15.12", log_level: "ERROR", raw_payload: "ERROR: nxlog syslog handler - socket timeout on port 514" },
-      { timestamp: "10:59:14", source_ip: "10.200.4.5", log_level: "WARN", raw_payload: "SYS: kernel module loaded successfully: ebpf_probe_console" },
-      { timestamp: "10:59:22", source_ip: "10.100.14.78", log_level: "INFO", raw_payload: "WARNING: high disk I/O load detected on ClickHouse replica partition 'db_partition_3'" }
+      { timestamp: "11:28:02", source_ip: "10.100.12.45", payload: "INFO: secops-run daemon: heartbeat verified" },
+      { timestamp: "11:28:10", source_ip: "10.100.15.12", payload: "ERROR: nxlog syslog handler - socket timeout on port 514" }
+    ],
+    windows: [
+      { timestamp: "11:28:05", event_id: 4624, hostname: "boston-ws-01", user_principal: "sridhargs@spinovation.com" },
+      { timestamp: "11:28:15", event_id: 4720, hostname: "dc-prod-01", user_principal: "administrator" }
+    ],
+    linux: [
+      { timestamp: "11:28:07", pid: 902, process: "sshd", message: "Accepted publickey for admin from 10.100.1.10" },
+      { timestamp: "11:28:19", pid: 1402, process: "systemd", message: "Started ClickHouse database server replica" }
+    ],
+    legacy: [
+      { timestamp: "11:28:01", job_id: "JOB09281", user_id: "IBMUSER1", action: "SELECT * FROM db2.customer_ledger" },
+      { timestamp: "11:28:22", job_id: "JOB09285", user_id: "SYSADM", action: "GRANT CONTROL ACCESS TO SEC_GROUP" }
+    ],
+    firewall: [
+      { src_ip: "10.100.12.45", dest_ip: "8.8.8.8", dest_port: 53, action: "ALLOW" },
+      { src_ip: "192.168.1.150", dest_ip: "10.200.4.5", dest_port: 22, action: "DENY" }
     ],
     identity: [
-      { session_id: "8c9a2c30-f822-4a00-b1d5-9988ffeeddcc", user_principal: "sridhargs@spinovation.com", auth_provider: "AzureAD", auth_status: "SUCCESS", timestamp: "10:59:05" },
-      { session_id: "a1a2b3b4-c5c6-7d7d-8e8e-9f9f0a0a1b1b", user_principal: "admin@spinovation.com", auth_provider: "Okta SSO", auth_status: "SUCCESS", timestamp: "10:58:32" },
-      { session_id: "e5e5f6f6-a7a7-8b8b-9c9c-0d0d1e1e2f2f", user_principal: "unknown_intruder@attack.com", auth_provider: "LDAP Direct", auth_status: "FAILED", timestamp: "10:57:11" }
-    ],
-    flow: [
-      { flow_id: 1049281, src_ip: "10.100.12.45", dest_ip: "8.8.8.8", dest_port: 53, protocol: "UDP", bytes_sent: 84 },
-      { flow_id: 1049282, src_ip: "10.100.14.78", dest_ip: "10.100.12.45", dest_port: 443, protocol: "TCP", bytes_sent: 2450 },
-      { flow_id: 1049283, src_ip: "10.200.4.5", dest_ip: "192.168.10.1", dest_port: 9997, protocol: "TCP", bytes_sent: 128400 }
-    ],
-    software: [
-      { record_id: 1001, hostname: "boston-ws-01", software_name: "nxlog-agent", version: "2.1.0", install_path: "/Program Files/nxlog/nxlog.exe", last_scan_date: "2026-06-10 09:30" },
-      { record_id: 1002, hostname: "london-ws-02", software_name: "splunkforwarder", version: "9.2.0", install_path: "/opt/splunk/bin/splunkd", last_scan_date: "2026-06-10 10:15" },
-      { record_id: 1003, hostname: "mainframe-prod-01", software_name: "usecops-daemon", version: "1.2.0", install_path: "/usr/bin/secops-daemon", last_scan_date: "2026-06-10 10:45" },
-      { record_id: 1004, hostname: "tokyo-ws-03", software_name: "openssl-lib", version: "1.1.1t", install_path: "/usr/lib/libcrypto.so", last_scan_date: "2026-06-10 08:00" }
+      { request_id: "c8d7e6f5-a4b3-2c1d-0e9f-8a7b6c5d4e3f", user: "sridhargs@spinovation.com", role_granted: "SOC_OPERATOR", approver: "supervisor_alpha" },
+      { request_id: "7a6b5c4d-3e2f-1a0b-9c8d-7e6f5a4b3c2d", user: "admin@spinovation.com", role_granted: "DOMAIN_ADMIN", approver: "secops_director" }
     ],
     hardware: [
-      { device_id: "d9e8d7c6-b5a4-3c2b-1a0f-9e8d7c6b5a43", device_type: "WORKSTATION", hostname: "boston-ws-01", ip_address: "10.100.12.45", cpu_cores: 8, memory_gb: 16, mac_address: "00:50:56:C0:00:01" },
-      { device_id: "f8e7d6c5-b4a3-2c1b-0a9f-8e7d6c5b4a32", device_type: "WORKSTATION", hostname: "london-ws-02", ip_address: "10.100.14.78", cpu_cores: 16, memory_gb: 32, mac_address: "00:50:56:C0:00:02" },
-      { device_id: "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d", device_type: "SERVER", hostname: "mainframe-prod-01", ip_address: "10.200.4.5", cpu_cores: 128, memory_gb: 1024, mac_address: "00:1A:2B:3C:4D:5E" },
-      { device_id: "c8d7e6f5-a4b3-2c1d-0e9f-8a7b6c5d4e3f", device_type: "ROUTER", hostname: "core-gateway-01", ip_address: "10.100.1.1", cpu_cores: 4, memory_gb: 8, mac_address: "00:0F:E2:3D:4E:5F" },
-      { device_id: "7a6b5c4d-3e2f-1a0b-9c8d-7e6f5a4b3c2d", device_type: "FIREWALL", hostname: "border-edge-fw", ip_address: "10.100.1.2", cpu_cores: 8, memory_gb: 16, mac_address: "00:0E:F1:2C:3B:4A" }
+      { device_id: "d9e8d7c6-b5a4-3c2b-1a0f-9e8d7c6b5a43", device_type: "WORKSTATION", hostname: "boston-ws-01", cpu_cores: 8, memory_gb: 16 },
+      { device_id: "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d", device_type: "SERVER", hostname: "mainframe-prod-01", cpu_cores: 128, memory_gb: 1024 }
+    ],
+    software: [
+      { record_id: 1001, hostname: "boston-ws-01", software_name: "nxlog-agent", version: "2.1.0" },
+      { record_id: 1002, hostname: "london-ws-02", software_name: "splunkforwarder", version: "9.2.0" }
     ]
   };
 
-  // Dynamic filter logic per mart table
   const getFilteredRows = () => {
     const rows = mockRows[selectedMart] || [];
     if (!searchQuery) return rows;
-    
-    return rows.filter(row => {
-      return Object.values(row).some(val => 
+    return rows.filter(row => 
+      Object.values(row).some(val => 
         String(val).toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    });
+      )
+    );
   };
 
   const currentMartSchema = schemas[selectedMart];
@@ -150,64 +179,60 @@ export default function Lakehouse() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-          Unified Ingestion Lakehouse & Data Marts
+          Unified Ingestion Lakehouse
         </h1>
         <p className="text-slate-500 text-sm mt-1">
-          Real-time log lakehouse capturing structured identity, flow, software, hardware, and raw unstructured event payloads.
+          Real-time log database tracking security telemetry streams, operating systems, network events, and hardware inventories.
         </p>
       </div>
 
       {/* Ingestion & Retention Overview KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="glass-panel p-5 border border-slate-200 bg-white">
-          <span className="text-[10px] font-mono text-slate-400 block font-bold uppercase">Real-Time Ingestion Rate</span>
+          <span className="text-[10px] font-mono text-slate-400 block font-bold uppercase">Ingestion Rate</span>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl font-extrabold text-slate-900">{ingestionRate}</span>
             <span className="text-xs font-mono text-slate-500 font-bold">EPS</span>
           </div>
-          <span className="text-[10px] text-emerald-600 block mt-1 font-bold">▲ +5.6% Log Flow Rate</span>
         </div>
 
         <div className="glass-panel p-5 border border-slate-200 bg-white">
-          <span className="text-[10px] font-mono text-slate-400 block font-bold uppercase">Lakehouse Storage Used</span>
+          <span className="text-[10px] font-mono text-slate-400 block font-bold uppercase">Storage Utilized</span>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl font-extrabold text-slate-900">{storageUsed.toFixed(2)}</span>
             <span className="text-xs font-mono text-slate-500 font-bold">GB</span>
           </div>
-          <span className="text-[10px] text-slate-500 block mt-1 font-bold">Of 5,000 GB Allocated Capacity</span>
         </div>
 
         <div className="glass-panel p-5 border border-slate-200 bg-white">
-          <span className="text-[10px] font-mono text-slate-400 block font-bold uppercase">Configured Retention Policy</span>
+          <span className="text-[10px] font-mono text-slate-400 block font-bold uppercase">Data Retention</span>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl font-extrabold text-slate-900">{retentionDays}</span>
             <span className="text-xs font-mono text-slate-500 font-bold">Days</span>
           </div>
-          <span className="text-[10px] text-violet-600 block mt-1 font-bold">Automatic partition rollover active</span>
         </div>
       </div>
 
-      {/* NEW: Explicit List of Data Marts with Drill Down Buttons */}
+      {/* Available Data Feeds List */}
       <div className="space-y-3">
-        <h2 className="text-lg font-bold text-slate-800">Available Ingestion Data Marts</h2>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+        <h2 className="text-base font-bold text-slate-800">Operational Data Marts</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {Object.entries(schemas).map(([key, value]) => {
             const isSelected = selectedMart === key;
             return (
               <div 
                 key={key}
                 onClick={() => setSelectedMart(key)}
-                className={`p-4 rounded-lg border transition-all cursor-pointer flex flex-col justify-between min-h-[150px] ${
+                className={`p-4 rounded-lg border transition-all cursor-pointer flex flex-col justify-between min-h-[130px] ${
                   isSelected ? "border-violet-500 bg-violet-50/40 shadow-sm" : "border-slate-200 bg-white hover:bg-slate-50/50"
                 }`}
               >
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-start">
-                    <span className="text-xl">📊</span>
-                    <span className="text-[9px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-bold">{value.eps}</span>
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-extrabold text-slate-850">{value.name}</span>
+                    <span className="text-[9px] font-mono text-slate-400">{value.count}</span>
                   </div>
-                  <h3 className="text-xs font-extrabold text-slate-850 truncate">{value.name}</h3>
-                  <p className="text-[10px] text-slate-400 font-mono truncate">{value.dbTable}</p>
+                  <p className="text-[10px] text-slate-500 leading-normal">{value.description}</p>
                 </div>
                 
                 <button
@@ -215,11 +240,11 @@ export default function Lakehouse() {
                     e.stopPropagation();
                     setSelectedMart(key);
                   }}
-                  className={`w-full py-1 rounded text-[10px] font-mono font-bold tracking-wider uppercase text-center mt-3 border transition-all ${
+                  className={`w-full py-1 rounded text-[9px] font-mono font-bold uppercase tracking-wider text-center mt-3 border transition-all ${
                     isSelected ? "bg-violet-600 border-violet-600 text-white" : "border-slate-200 text-slate-600 hover:border-violet-400"
                   }`}
                 >
-                  {isSelected ? "⚡ Active Mart" : "🔍 Drill Down"}
+                  {isSelected ? "Active Stream" : "Drill Down"}
                 </button>
               </div>
             );
@@ -227,40 +252,40 @@ export default function Lakehouse() {
         </div>
       </div>
 
-      {/* Main split grid */}
+      {/* Query & Schema detail Split Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Left columns - Drill-down Details & Search Registry */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="glass-panel p-6 border border-slate-200 bg-white flex flex-col justify-between min-h-[500px]">
+        {/* Drill-down Results Table */}
+        <div className="lg:col-span-2">
+          <div className="glass-panel p-6 border border-slate-200 bg-white flex flex-col justify-between min-h-[420px]">
             <div>
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex justify-between items-center mb-3">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-800">{currentMartSchema.name}</h2>
-                  <code className="text-xs font-mono text-cyan-600 bg-slate-100 px-2 py-0.5 rounded">
-                    Table: {currentMartSchema.dbTable} &bull; {currentMartSchema.count}
+                  <h3 className="text-base font-bold text-slate-800">{currentMartSchema.name}</h3>
+                  <code className="text-[10px] font-mono text-cyan-600 bg-slate-100 px-1.5 py-0.2 rounded">
+                    Table: {currentMartSchema.dbTable}
                   </code>
                 </div>
               </div>
 
               {/* Log Query Input */}
               <div className="relative mb-4">
-                <span className="absolute left-3.5 top-2.5 text-slate-400 text-sm">🔍</span>
+                <span className="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
                 <input
                   type="text"
-                  placeholder={`Search ${currentMartSchema.name} database table...`}
+                  placeholder={`Search ${currentMartSchema.name} records...`}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 pl-9 font-mono text-xs focus:outline-none focus:border-violet-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded p-2 pl-8 font-mono text-xs focus:outline-none focus:border-violet-500"
                 />
               </div>
             </div>
 
-            {/* Drill-down Results Table */}
-            <div className="flex-1 my-2 overflow-x-auto min-h-[250px]">
+            {/* Ingestion results table */}
+            <div className="flex-1 my-2 overflow-x-auto min-h-[220px]">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-slate-200 text-slate-400 font-mono font-bold uppercase bg-slate-50">
+                  <tr className="border-b border-slate-200 text-slate-400 font-mono font-bold uppercase bg-slate-50/50">
                     {currentMartSchema.columns.map((col) => (
                       <th key={col.name} className="p-3">{col.name}</th>
                     ))}
@@ -279,32 +304,29 @@ export default function Lakehouse() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={currentMartSchema.columns.length} className="text-center py-12 text-slate-400">
-                        No rows found matching search query filter in {currentMartSchema.dbTable}
+                      <td colSpan={currentMartSchema.columns.length} className="text-center py-8 text-slate-400">
+                        No rows matching filter criteria.
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
-
           </div>
         </div>
 
-        {/* Right column - Data mart schema column details */}
+        {/* Schema Definition Drawer */}
         <div className="lg:col-span-1 space-y-6">
-          
-          {/* Table Schema metadata fields */}
           <div className="glass-panel p-6 border border-slate-200 bg-white space-y-4">
-            <h3 className="text-base font-bold text-slate-800">Table Fields Schema Definition</h3>
-            <p className="text-xs text-slate-400">{currentMartSchema.description}</p>
+            <h3 className="text-base font-bold text-slate-800">Database Fields Schema</h3>
+            <p className="text-xs text-slate-500">{currentMartSchema.description}</p>
 
             <div className="space-y-3 font-mono text-xs">
               {currentMartSchema.columns.map((col) => (
-                <div key={col.name} className="p-3 bg-slate-50 rounded border border-slate-200 space-y-1">
+                <div key={col.name} className="p-3 bg-slate-50 border border-slate-200 rounded space-y-1">
                   <div className="flex justify-between items-center">
                     <span className="font-bold text-slate-800">{col.name}</span>
-                    <span className="text-[10px] text-cyan-600 bg-cyan-50 border border-cyan-200 px-1.5 py-0.2 rounded">
+                    <span className="text-[9px] text-cyan-600 bg-cyan-50 border border-cyan-200 px-1.5 py-0.2 rounded font-bold">
                       {col.type}
                     </span>
                   </div>
@@ -313,33 +335,6 @@ export default function Lakehouse() {
               ))}
             </div>
           </div>
-
-          {/* Retention settings action */}
-          <div className="glass-panel p-6 border border-slate-200 bg-white space-y-4">
-            <h3 className="text-base font-bold text-slate-800">Retention & Data Rollover</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center text-xs">
-                <span className="font-semibold text-slate-700 font-mono">Retention Threshold</span>
-                <span className="font-mono font-bold text-violet-600">{retentionDays} Days</span>
-              </div>
-              <input
-                type="range"
-                min="90"
-                max="730"
-                step="30"
-                value={retentionDays}
-                onChange={(e) => setRetentionDays(parseInt(e.target.value))}
-                className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-violet-500"
-              />
-              <button 
-                onClick={() => alert(`Retention threshold updated to rollover data older than ${retentionDays} days.`)}
-                className="w-full text-center px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded text-xs font-bold font-mono"
-              >
-                Apply Retention Rule
-              </button>
-            </div>
-          </div>
-
         </div>
 
       </div>
