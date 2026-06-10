@@ -95,6 +95,10 @@ export default function Dashboard() {
     }, 3500);
   };
 
+  const handleCreateCase = (alertId, alertTitle) => {
+    alert(`🎟️ Case ticket created successfully in PostgreSQL cases DB for ${alertId}: "${alertTitle}". System notifications dispatched to Exchange/Google mail servers!`);
+  };
+
   return (
     <div className="space-y-8">
       {/* Page Title */}
@@ -110,7 +114,7 @@ export default function Dashboard() {
       </div>
 
       {/* MS Sentinel style KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <div className="enterprise-panel p-5">
           <span className="text-[10px] font-bold font-mono text-slate-500 uppercase tracking-wider block">Ingestion Rate</span>
           <div className="flex justify-between items-end mt-2">
@@ -119,6 +123,17 @@ export default function Dashboard() {
           </div>
           <div className="w-full bg-slate-200 h-1 rounded overflow-hidden mt-3">
             <div className="bg-sky-500 h-full w-[70%]"></div>
+          </div>
+        </div>
+
+        <div className="enterprise-panel p-5">
+          <span className="text-[10px] font-bold font-mono text-slate-500 uppercase tracking-wider block">Unstructured Ingestion</span>
+          <div className="flex justify-between items-end mt-2">
+            <span className="text-2xl font-extrabold font-mono text-violet-600">4,852 <span className="text-xs font-normal text-slate-500">EPS</span></span>
+            <span className="sentinel-kpi-trend-up">▲ +34.1%</span>
+          </div>
+          <div className="w-full bg-slate-200 h-1 rounded overflow-hidden mt-3">
+            <div className="bg-violet-500 h-full w-[45%]"></div>
           </div>
         </div>
 
@@ -156,10 +171,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Center Row: Geovelocity Visualizer & Mart Health */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Center Row: Geovelocity Visualizer & Mart Health & SIEM Coverage */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Google Chronicle style Geovelocity Visualizer */}
-        <div className="enterprise-panel p-5 lg:col-span-2 space-y-4">
+        <div className="enterprise-panel lg:col-span-2 space-y-4">
           <div>
             <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider font-mono">Geovelocity Impossible Travel Visualizer</h2>
             <p className="text-[11px] text-slate-500 mt-0.5">Real-time mapping of concurrent geolocation SSO credentials requests</p>
@@ -188,16 +203,17 @@ export default function Dashboard() {
         </div>
 
         {/* Data Mart Performance */}
-        <div className="enterprise-panel p-5 lg:col-span-1 space-y-4">
+        <div className="enterprise-panel lg:col-span-1 space-y-4">
           <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider font-mono">Telemetry Data Marts</h2>
           <div className="space-y-2.5">
             {[
               { name: "Windows Event Mart", desc: "Active Directory logs", state: "STABLE", color: "text-emerald-600" },
               { name: "Linux Syslog & eBPF", desc: "Syslog kernel traces", state: "STABLE", color: "text-emerald-600" },
               { name: "Firewall Flow Mart", desc: "Ingestion flow records", state: "STABLE", color: "text-emerald-600" },
-              { name: "Identity Governance Mart", desc: "MFA, Saviynt log traces", state: "ALERT", color: "text-rose-600" }
+              { name: "Identity Governance Mart", desc: "MFA, Saviynt log traces", state: "ALERT", color: "text-rose-600" },
+              { name: "Unstructured Log Mart", desc: "Raw logs and unstructured flows", state: "STABLE", color: "text-emerald-600" }
             ].map((mart, idx) => (
-              <div key={idx} className="p-3 bg-slate-50 border border-slate-200/60 rounded flex items-center justify-between" style={{ padding: "12px 16px" }}>
+              <div key={idx} className="p-3 bg-slate-50 border border-slate-200/60 rounded flex items-center justify-between" style={{ padding: "10px 12px" }}>
                 <div>
                   <span className="text-xs font-bold text-slate-800 block">{mart.name}</span>
                   <span className="text-[10px] text-slate-500">{mart.desc}</span>
@@ -207,10 +223,66 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
+
+        {/* SIEM Dashboard Coverage */}
+        <div className="enterprise-panel lg:col-span-1 space-y-4">
+          <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider font-mono">SIEM Dashboard Coverage</h2>
+          <div className="space-y-3 text-xs">
+            <div>
+              <div className="flex justify-between font-mono text-[10px] text-slate-600 mb-1">
+                <span>WINDOWS OS</span>
+                <span>450/500 Nodes (90%)</span>
+              </div>
+              <div className="w-full bg-slate-200 h-1.5 rounded overflow-hidden">
+                <div className="bg-sky-500 h-full w-[90%]"></div>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between font-mono text-[10px] text-slate-600 mb-1">
+                <span>LINUX OS</span>
+                <span>800/840 Nodes (95%)</span>
+              </div>
+              <div className="w-full bg-slate-200 h-1.5 rounded overflow-hidden">
+                <div className="bg-emerald-500 h-full w-[95%]"></div>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between font-mono text-[10px] text-slate-600 mb-1">
+                <span>Z/OS MAINFRAME</span>
+                <span>10/10 LPARs (100%)</span>
+              </div>
+              <div className="w-full bg-slate-200 h-1.5 rounded overflow-hidden">
+                <div className="bg-indigo-500 h-full w-[100%]"></div>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between font-mono text-[10px] text-slate-600 mb-1">
+                <span>ACTIVE DIRECTORY</span>
+                <span>5/5 Controllers (100%)</span>
+              </div>
+              <div className="w-full bg-slate-200 h-1.5 rounded overflow-hidden">
+                <div className="bg-cyan-500 h-full w-[100%]"></div>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between font-mono text-[10px] text-slate-600 mb-1">
+                <span>APACHE / WEB SERVERS</span>
+                <span>240/300 Instances (80%)</span>
+              </div>
+              <div className="w-full bg-slate-200 h-1.5 rounded overflow-hidden">
+                <div className="bg-violet-500 h-full w-[80%]"></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Bottom Grid: Actionable Alert Manager */}
-      <div className="enterprise-panel p-6 space-y-6">
+      <div className="enterprise-panel space-y-6">
         <div>
           <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider font-mono">Actionable Security Alerts Grid</h2>
           <p className="text-[11px] text-slate-500 mt-0.5">Correlated security events mapped to MITRE TTPs and inline containment triggers</p>
@@ -227,7 +299,7 @@ export default function Dashboard() {
                 <th>Raw Syslog Preview</th>
                 <th>Severity</th>
                 <th>Status</th>
-                <th>Actions</th>
+                <th>SIEM Operations</th>
               </tr>
             </thead>
             <tbody>
@@ -252,17 +324,26 @@ export default function Dashboard() {
                     </span>
                   </td>
                   <td>
-                    {alert.status === "ACTIVE" ? (
+                    <div className="flex gap-2">
+                      {alert.status === "ACTIVE" ? (
+                        <button
+                          onClick={() => triggerSOARPlaybook(alert.id, "quarantine_host_vm")}
+                          disabled={isExecuting}
+                          className="btn-sentinel"
+                        >
+                          ⚡ Isolate
+                        </button>
+                      ) : (
+                        <span className="text-[10px] text-slate-500 font-semibold font-mono self-center">CONTAINED</span>
+                      )}
                       <button
-                        onClick={() => triggerSOARPlaybook(alert.id, "quarantine_host_vm")}
-                        disabled={isExecuting}
+                        onClick={() => handleCreateCase(alert.id, alert.title)}
                         className="btn-sentinel"
+                        style={{ background: "rgba(99, 102, 241, 0.08)", borderColor: "rgba(99, 102, 241, 0.25)", color: "#4f46e5" }}
                       >
-                        ⚡ Isolate Node
+                        🎟️ Ticket
                       </button>
-                    ) : (
-                      <span className="text-[10px] text-slate-500 font-semibold font-mono">CONTAINED</span>
-                    )}
+                    </div>
                   </td>
                 </tr>
               ))}
