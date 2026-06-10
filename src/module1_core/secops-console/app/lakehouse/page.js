@@ -11,15 +11,7 @@ export default function Lakehouse() {
   const [selectedMart, setSelectedMart] = useState("unstructured");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Real-time raw log stream simulator state
-  const [rawLogs, setRawLogs] = useState([
-    { time: "10:59:02", ip: "10.100.12.45", msg: "INFO: secops-run daemon: heartbeat verified", type: "UNSTRUCTURED" },
-    { time: "10:59:05", ip: "10.100.14.78", msg: "SECURITY: Auth checked for user admin - session 449", type: "STRUCTURED_IDENTITY" },
-    { time: "10:59:10", ip: "10.100.15.12", msg: "ERROR: nxlog syslog handler - socket timeout on port 514", type: "UNSTRUCTURED" },
-    { time: "10:59:11", ip: "10.100.12.45", msg: "FLOW: outbound TCP connection to 8.8.8.8:53 allowed", type: "STRUCTURED_FLOW" }
-  ]);
-
-  // Dynamic ingestion rates
+  // Dynamic ingestion rates fluctuation
   useEffect(() => {
     const interval = setInterval(() => {
       setIngestionRate(prev => Math.floor(prev + (Math.random() * 400 - 200)));
@@ -33,6 +25,8 @@ export default function Lakehouse() {
     unstructured: {
       name: "Unstructured Raw Logs",
       dbTable: "clickhouse.raw_logs",
+      count: "~12,482,091 rows",
+      eps: "2,400 EPS",
       description: "Stores raw, unparsed syslog streams, event dump JSON payloads, and unclassified text outputs forwarded from agents.",
       columns: [
         { name: "timestamp", type: "DateTime", desc: "Ingestion timestamp on the Lakehouse server" },
@@ -44,6 +38,8 @@ export default function Lakehouse() {
     identity: {
       name: "Structured Identity Mart",
       dbTable: "postgres.identity_logs",
+      count: "942,842 rows",
+      eps: "900 EPS",
       description: "Parsed database of session authentications, token exchanges, dynamic directory changes, and credential status reports.",
       columns: [
         { name: "session_id", type: "UUID", desc: "Unique session tracker identifier" },
@@ -56,6 +52,8 @@ export default function Lakehouse() {
     flow: {
       name: "Structured Network Flow Mart",
       dbTable: "postgres.flow_logs",
+      count: "3,184,920 rows",
+      eps: "1,500 EPS",
       description: "Aggregated flow records depicting packet transits, connection routes, bytes transferred, and local firewall states.",
       columns: [
         { name: "flow_id", type: "Int64", desc: "Unique flow table incremental index" },
@@ -69,6 +67,8 @@ export default function Lakehouse() {
     software: {
       name: "Structured Software Inventory",
       dbTable: "postgres.software_inventory",
+      count: "4,812 rows",
+      eps: "Scheduled Sync",
       description: "Dynamic catalog of installed agent binary revisions, system dependencies, library paths, and operational applications.",
       columns: [
         { name: "record_id", type: "Int64", desc: "Unique software registry row ID" },
@@ -82,6 +82,8 @@ export default function Lakehouse() {
     hardware: {
       name: "Structured Hardware Inventory",
       dbTable: "postgres.hardware_inventory",
+      count: "1,502 rows",
+      eps: "Scheduled Sync",
       description: "Complete asset inventory of CPU layout core architectures, RAM metrics, interface MACs, and device hardware classifications.",
       columns: [
         { name: "device_id", type: "UUID", desc: "Unique asset hardware tracking ID" },
@@ -151,12 +153,12 @@ export default function Lakehouse() {
           Unified Ingestion Lakehouse & Data Marts
         </h1>
         <p className="text-slate-500 text-sm mt-1">
-          Real-time log lakehouse capturing structured identity, flow, software, hardware, and raw unstructured event payloads from workstation and server agents.
+          Real-time log lakehouse capturing structured identity, flow, software, hardware, and raw unstructured event payloads.
         </p>
       </div>
 
-      {/* Analytics KPI Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Ingestion & Retention Overview KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="glass-panel p-5 border border-slate-200 bg-white">
           <span className="text-[10px] font-mono text-slate-400 block font-bold uppercase">Real-Time Ingestion Rate</span>
           <div className="flex items-baseline gap-2 mt-2">
@@ -183,14 +185,45 @@ export default function Lakehouse() {
           </div>
           <span className="text-[10px] text-violet-600 block mt-1 font-bold">Automatic partition rollover active</span>
         </div>
+      </div>
 
-        <div className="glass-panel p-5 border border-slate-200 bg-white">
-          <span className="text-[10px] font-mono text-slate-400 block font-bold uppercase">Connected Fleet Devices</span>
-          <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-2xl font-extrabold text-slate-900">1,502</span>
-            <span className="text-xs font-mono text-slate-500 font-bold">Assets</span>
-          </div>
-          <span className="text-[10px] text-emerald-600 block mt-1 font-bold">● Streaming Workstations, Servers, Routers</span>
+      {/* NEW: Explicit List of Data Marts with Drill Down Buttons */}
+      <div className="space-y-3">
+        <h2 className="text-lg font-bold text-slate-800">Available Ingestion Data Marts</h2>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+          {Object.entries(schemas).map(([key, value]) => {
+            const isSelected = selectedMart === key;
+            return (
+              <div 
+                key={key}
+                onClick={() => setSelectedMart(key)}
+                className={`p-4 rounded-lg border transition-all cursor-pointer flex flex-col justify-between min-h-[150px] ${
+                  isSelected ? "border-violet-500 bg-violet-50/40 shadow-sm" : "border-slate-200 bg-white hover:bg-slate-50/50"
+                }`}
+              >
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-start">
+                    <span className="text-xl">📊</span>
+                    <span className="text-[9px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-bold">{value.eps}</span>
+                  </div>
+                  <h3 className="text-xs font-extrabold text-slate-850 truncate">{value.name}</h3>
+                  <p className="text-[10px] text-slate-400 font-mono truncate">{value.dbTable}</p>
+                </div>
+                
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedMart(key);
+                  }}
+                  className={`w-full py-1 rounded text-[10px] font-mono font-bold tracking-wider uppercase text-center mt-3 border transition-all ${
+                    isSelected ? "bg-violet-600 border-violet-600 text-white" : "border-slate-200 text-slate-600 hover:border-violet-400"
+                  }`}
+                >
+                  {isSelected ? "⚡ Active Mart" : "🔍 Drill Down"}
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -201,30 +234,12 @@ export default function Lakehouse() {
         <div className="lg:col-span-2 space-y-6">
           <div className="glass-panel p-6 border border-slate-200 bg-white flex flex-col justify-between min-h-[500px]">
             <div>
-              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
+              <div className="flex justify-between items-center mb-4">
                 <div>
                   <h2 className="text-lg font-bold text-slate-800">{currentMartSchema.name}</h2>
                   <code className="text-xs font-mono text-cyan-600 bg-slate-100 px-2 py-0.5 rounded">
-                    Table: {currentMartSchema.dbTable}
+                    Table: {currentMartSchema.dbTable} &bull; {currentMartSchema.count}
                   </code>
-                </div>
-
-                {/* Data Mart drill-down selectors */}
-                <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-mono font-bold flex-wrap">
-                  {Object.keys(schemas).map((key) => (
-                    <button
-                      key={key}
-                      onClick={() => {
-                        setSelectedMart(key);
-                        setSearchQuery("");
-                      }}
-                      className={`px-2.5 py-1.5 rounded-md transition-all ${
-                        selectedMart === key ? "bg-white text-violet-600 shadow-sm" : "text-slate-500 hover:text-slate-800"
-                      }`}
-                    >
-                      {key.toUpperCase()}
-                    </button>
-                  ))}
                 </div>
               </div>
 

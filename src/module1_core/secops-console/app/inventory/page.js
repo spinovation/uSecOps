@@ -34,43 +34,81 @@ export default function Inventory() {
     pkg.version.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // CSV Exporter
+  const handleExportCSV = () => {
+    let csvContent = "data:text/csv;charset=utf-8,";
+    if (activeTab === "hardware") {
+      csvContent += "Hostname,IP Address,Device Type,CPU Cores,Memory,Storage,MAC Address,Serial,Status\n";
+      hardwareAssets.forEach(item => {
+        csvContent += `"${item.hostname}","${item.ip}","${item.type}","${item.cpu}","${item.memory}","${item.storage}","${item.mac}","${item.serial}","${item.status}"\n`;
+      });
+    } else {
+      csvContent += "Package Name,Version,Executable Path,Host Node,Install Date,Status\n";
+      softwareAssets.forEach(item => {
+        csvContent += `"${item.name}","${item.version}","${item.path}","${item.host}","${item.installDate}","${item.status}"\n`;
+      });
+    }
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `usecops_${activeTab}_inventory.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-8" style={{ padding: "12px 24px" }}>
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-          Appliance Asset Inventory
-        </h1>
-        <p className="text-slate-500 text-sm mt-1">
-          Complete database of registered appliance server nodes, workstation endpoints, firewall assets, and installed software agents.
-        </p>
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+            Appliance Asset Inventory
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">
+            Complete database of registered appliance server nodes, workstation endpoints, firewall assets, and installed software agents.
+          </p>
+        </div>
+        
+        {/* CSV Export Button */}
+        <button
+          onClick={handleExportCSV}
+          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-mono text-xs font-bold rounded flex items-center gap-2 shadow-sm transition-all"
+        >
+          📥 Export Active Tab to CSV
+        </button>
       </div>
 
       <div className="glass-panel p-6 space-y-6 border border-slate-200 bg-white">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-slate-100 pb-4">
-          {/* Inventory Category Tabs */}
-          <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-mono font-bold">
+          
+          {/* Spaced-out Inventory Category Tabs to prevent overlapping */}
+          <div className="flex flex-col sm:flex-row gap-3 text-xs font-mono font-bold w-full sm:w-auto">
             <button
               onClick={() => {
                 setActiveTab("hardware");
                 setSearchQuery("");
               }}
-              className={`px-4 py-2 rounded-md transition-all ${
-                activeTab === "hardware" ? "bg-white text-violet-600 shadow-sm" : "text-slate-500"
+              className={`px-4 py-2.5 rounded-lg border transition-all ${
+                activeTab === "hardware" 
+                  ? "bg-violet-650 border-violet-600 bg-violet-600 text-white shadow-sm" 
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
               }`}
             >
-              Hardware Inventory ({filteredHardware.length})
+              🖥️ Hardware Inventory ({filteredHardware.length})
             </button>
             <button
               onClick={() => {
                 setActiveTab("software");
                 setSearchQuery("");
               }}
-              className={`px-4 py-2 rounded-md transition-all ${
-                activeTab === "software" ? "bg-white text-violet-600 shadow-sm" : "text-slate-500"
+              className={`px-4 py-2.5 rounded-lg border transition-all ${
+                activeTab === "software" 
+                  ? "bg-violet-650 border-violet-600 bg-violet-600 text-white shadow-sm" 
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
               }`}
             >
-              Software Inventory ({filteredSoftware.length})
+              📦 Software Inventory ({filteredSoftware.length})
             </button>
           </div>
 

@@ -323,6 +323,18 @@ export default function Vulnerabilities() {
           <div className="glass-panel p-6 border-slate-200 border relative">
             <h2 className="text-lg font-bold text-slate-800 mb-4">Binary Audit & Scanner</h2>
             
+            {/* Hidden Input file selector */}
+            <input 
+              type="file" 
+              id="binary-upload-input" 
+              className="hidden" 
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  startAnalysis(e.target.files[0].name);
+                }
+              }} 
+            />
+
             {isAnalyzing ? (
               <div className="border-2 border-dashed border-violet-300 rounded-lg p-8 bg-violet-50/20 flex flex-col items-center justify-center space-y-4 min-h-[160px]">
                 <div className="flex items-center gap-3">
@@ -347,6 +359,7 @@ export default function Vulnerabilities() {
                 onDragOver={handleDrag}
                 onDragLeave={handleDrag}
                 onDrop={handleDrop}
+                onClick={() => document.getElementById("binary-upload-input").click()}
                 className={`border-2 border-dashed rounded-lg p-8 flex flex-col items-center justify-center transition-all ${
                   dragActive ? "border-violet-600 bg-violet-50/50" : "border-slate-300 hover:border-violet-400 bg-slate-50/50"
                 }`}
@@ -357,7 +370,7 @@ export default function Vulnerabilities() {
                 <p className="text-xs text-slate-400 text-center mt-1">Accepts .msi, .deb, .rpm, .tar.gz (Agent Software/Enterprise Binaries)</p>
                 
                 {/* Preset Mock buttons */}
-                <div className="mt-4 flex flex-wrap gap-2 justify-center">
+                <div className="mt-4 flex flex-wrap gap-2 justify-center" onClick={(e) => e.stopPropagation()}>
                   <button 
                     onClick={() => selectPresetBinary("nxlog-agent-v2.1.msi")}
                     className="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-200 rounded text-xs font-mono text-slate-600 font-bold"
