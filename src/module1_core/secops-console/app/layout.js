@@ -108,7 +108,7 @@ export default function RootLayout({ children }) {
         {/* Microsoft Sentinel Style Sidebar in Light Theme */}
         <aside className="w-72 border-r border-slate-200 bg-white flex flex-col h-screen shrink-0 z-30 select-none">
           {/* Brand header */}
-          <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+          <div className="py-6 px-8 border-b border-slate-200 flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xl font-extrabold tracking-wider bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
@@ -125,7 +125,7 @@ export default function RootLayout({ children }) {
           </div>
 
           {/* Grouped Sidebar Navigation */}
-          <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
+          <nav className="flex-1 py-4 pl-8 pr-4 space-y-6 overflow-y-auto">
             {navigationSections.map((section, idx) => (
               <div key={idx} className="space-y-1.5">
                 <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -155,7 +155,7 @@ export default function RootLayout({ children }) {
           </nav>
 
           {/* Appliance Status */}
-          <div className="p-4 border-t border-slate-200 bg-slate-50 space-y-2 font-mono text-[10px]">
+          <div className="py-4 pl-8 pr-4 border-t border-slate-200 bg-slate-50 space-y-2 font-mono text-[10px]">
             <div className="flex justify-between items-center text-slate-500">
               <span>Security State:</span>
               <span className="text-emerald-600 font-bold uppercase tracking-wider">AIR-GAPPED</span>
@@ -170,7 +170,7 @@ export default function RootLayout({ children }) {
         {/* Right Workspace Shell */}
         <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
           {/* Header - Google Chronicle style Search Bar */}
-          <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-8 z-20">
+          <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between pr-8 pl-12 z-20">
             {/* Center: Global Google Chronicle search bar */}
             <form onSubmit={handleSearchSubmit} className="chronicle-search-container">
               <span className="absolute left-4 top-2.5 text-slate-400 text-sm">🔍</span>
@@ -193,8 +193,8 @@ export default function RootLayout({ children }) {
           </header>
 
           {/* Page Viewport */}
-          <main className="flex-1 overflow-y-auto p-8 relative bg-[#f4f6f9]">
-            <div className="max-w-7xl mx-auto w-full">
+          <main className="flex-1 overflow-y-auto pt-8 pb-8 pr-8 pl-12 relative bg-[#f4f6f9]">
+            <div className="max-w-[1600px] w-full">
               {children}
             </div>
           </main>
