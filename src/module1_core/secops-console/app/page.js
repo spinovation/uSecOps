@@ -197,7 +197,7 @@ export default function Dashboard() {
               { name: "Firewall Flow Mart", desc: "Ingestion flow records", state: "STABLE", color: "text-emerald-600" },
               { name: "Identity Governance Mart", desc: "MFA, Saviynt log traces", state: "ALERT", color: "text-rose-600" }
             ].map((mart, idx) => (
-              <div key={idx} className="p-3 bg-slate-50 border border-slate-200/60 rounded flex items-center justify-between">
+              <div key={idx} className="p-3 bg-slate-50 border border-slate-200/60 rounded flex items-center justify-between" style={{ padding: "12px 16px" }}>
                 <div>
                   <span className="text-xs font-bold text-slate-800 block">{mart.name}</span>
                   <span className="text-[10px] text-slate-500">{mart.desc}</span>
