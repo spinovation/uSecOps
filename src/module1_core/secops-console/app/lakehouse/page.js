@@ -20,15 +20,16 @@ export default function Lakehouse() {
   // Detailed schemas and fields for the 8 specific data sources
   const schemas = {
     unstructured: {
-      name: "Unstructured Raw Logs",
-      dbTable: "clickhouse.raw_logs",
+      name: "Unstructured & Raw Logs",
+      dbTable: "clickhouse.unstructured_raw",
       count: "12.4M rows",
       eps: "2,400 EPS",
-      description: "Raw syslog payloads and unparsed agent event outputs.",
+      description: "Stores raw syslogs, emails, chat logs, images, and unparsed system events.",
       columns: [
         { name: "timestamp", type: "DateTime", desc: "Ingestion time" },
         { name: "source_ip", type: "String", desc: "Origin host IP" },
-        { name: "payload", type: "String", desc: "Raw unparsed text string" }
+        { name: "data_type", type: "Enum('CHAT', 'EMAIL', 'IMAGE', 'RAW_SYSLOG')", desc: "Type of unstructured payload" },
+        { name: "raw_content", type: "String", desc: "Unstructured message, conversation text, or image metadata" }
       ]
     },
     windows: {
@@ -128,8 +129,10 @@ export default function Lakehouse() {
   // Mock Rows data
   const mockRows = {
     unstructured: [
-      { timestamp: "11:28:02", source_ip: "10.100.12.45", payload: "INFO: secops-run daemon: heartbeat verified" },
-      { timestamp: "11:28:10", source_ip: "10.100.15.12", payload: "ERROR: nxlog syslog handler - socket timeout on port 514" }
+      { timestamp: "11:33:02", source_ip: "10.100.12.45", data_type: "EMAIL", raw_content: "Subject: Security Alert Alert - phishing reported on node 'BOS-01'" },
+      { timestamp: "11:33:10", source_ip: "10.100.14.78", data_type: "CHAT", raw_content: "Slack: #incident-response: vm containment executed by orchestrator" },
+      { timestamp: "11:33:12", source_ip: "10.200.4.5", data_type: "RAW_SYSLOG", raw_content: "OS390: syslog: RACF access granted to admin key" },
+      { timestamp: "11:33:20", source_ip: "10.100.12.45", data_type: "IMAGE", raw_content: "Asset capture: bios_motherboard_revision_b.jpg (SHA256: 8fa12c9b...)" }
     ],
     windows: [
       { timestamp: "11:28:05", event_id: 4624, hostname: "boston-ws-01", user_principal: "sridhargs@spinovation.com" },
@@ -229,7 +232,7 @@ export default function Lakehouse() {
               >
                 <div className="space-y-1">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-extrabold text-slate-850">{value.name}</span>
+                    <span className="text-sm font-extrabold text-slate-855">{value.name}</span>
                     <span className="text-[9px] font-mono text-slate-400">{value.count}</span>
                   </div>
                   <p className="text-[10px] text-slate-500 leading-normal">{value.description}</p>
