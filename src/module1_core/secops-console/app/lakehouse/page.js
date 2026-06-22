@@ -3,40 +3,74 @@
 import { useState, useEffect } from "react";
 
 export default function Lakehouse() {
-  const [ingestionRate, setIngestionRate] = useState(5120);
+  const [ingestionRate, setIngestionRate] = useState(10240); // Raw Inbound
+  const [routedRate, setRoutedRate] = useState(4820); // Routed Outbound
   const [storageUsed, setStorageUsed] = useState(86.42);
   const [retentionDays, setRetentionDays] = useState(365);
   const [selectedMart, setSelectedMart] = useState("unstructured");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Dynamic Ingestion Rate Fluctuation
+  // Ingestion Pipeline Routing rules (Cribl-style)
+  const [routingRules, setRoutingRules] = useState([
+    { id: "rule-1", name: "Drop Debug Logs", desc: "Filters out dev/debug syslog levels to prevent tool overload", action: "DROP", matches: "log_level == 'DEBUG'", enabled: true },
+    { id: "rule-2", name: "Route Raw Logs to clickhouse.unstructured_raw", desc: "Pipes all original, unaltered telemetry directly to raw cold marts", action: "ROUTE", matches: "data_type == 'RAW_SYSLOG'", enabled: true },
+    { id: "rule-3", name: "Mask SSN & Credit Card numbers", desc: "Replaces PII pattern strings with masks", action: "MASK", matches: "regex('[0-9]{3}-[0-9]{2}-...')", enabled: true },
+    { id: "rule-4", name: "Forward Security Logons to postgres.windows_logs", desc: "Filters and routes active security logs to core Sentinel engines", action: "FORWARD", matches: "event_id == 4624", enabled: true }
+  ]);
+
+  // Inbound API Sources (Legacy & On-Prem)
+  const [inboundAPIs, setInboundAPIs] = useState([
+    { id: "api-1", name: "IBM AS/400 QAUDJRN Feed", type: "Legacy Pull", endpoint: "10.200.4.5:9450/api/journal", interval: "30s", status: "ACTIVE" },
+    { id: "api-2", name: "On-Prem Oracle Audit Log", type: "DB Poller", endpoint: "jdbc:oracle:thin:@10.100.22.4:1521/audit", interval: "60s", status: "ACTIVE" },
+    { id: "api-3", name: "z/OS SMF Real-Time Stream", type: "Legacy Push", endpoint: "10.200.4.6:3090/api/smf", interval: "Real-time", status: "ACTIVE" }
+  ]);
+
+  const [newRuleName, setNewRuleName] = useState("");
+  const [newRuleMatch, setNewRuleMatch] = useState("");
+  const [newRuleAction, setNewRuleAction] = useState("FORWARD");
+
   useEffect(() => {
     const interval = setInterval(() => {
+      // Simulate traffic optimization
       setIngestionRate(prev => Math.floor(prev + (Math.random() * 400 - 200)));
+      setRoutedRate(prev => Math.floor(prev + (Math.random() * 200 - 100)));
       setStorageUsed(prev => +(prev + 0.01).toFixed(2));
     }, 3000);
     return () => clearInterval(interval);
   }, []);
 
-  // Custom Mart Builder States
-  const [customMartName, setCustomMartName] = useState("");
-  const [selectedFields, setSelectedFields] = useState([]);
-  
-  // Available fields to choose from for custom pivot mart
-  const availableFields = [
-    "timestamp", "source_ip", "event_id", "hostname", "user_principal",
-    "pid", "process", "message", "job_id", "user_id", "action",
-    "src_ip", "dest_ip", "dest_port", "protocol", "device_type", "software_name"
-  ];
+  const handleToggleRule = (id) => {
+    setRoutingRules(prev => prev.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r));
+  };
 
-  // Data feeds list (active or paused)
-  const [dataFeeds, setDataFeeds] = useState({
+  const handleAddRule = () => {
+    if (!newRuleName || !newRuleMatch) {
+      alert("Please fill in the rule name and matching condition!");
+      return;
+    }
+
+    const newRule = {
+      id: `rule-${Date.now()}`,
+      name: newRuleName,
+      desc: "User defined custom pipeline filter rule",
+      action: newRuleAction,
+      matches: newRuleMatch,
+      enabled: true
+    };
+
+    setRoutingRules(prev => [...prev, newRule]);
+    setNewRuleName("");
+    setNewRuleMatch("");
+    alert(`Dynamic pipeline rule '${newRuleName}' has been added and hot-reloaded into Cribl routing engine.`);
+  };
+
+  // Detailed schemas and fields for the 8 specific data sources
+  const schemas = {
     unstructured: {
       name: "Unstructured & Raw Logs",
       dbTable: "clickhouse.unstructured_raw",
       count: "12.4M rows",
       eps: "2,400 EPS",
-      status: "ACTIVE",
       description: "Stores raw syslogs, emails, chat logs, images, and unparsed system events.",
       columns: [
         { name: "timestamp", type: "DateTime", desc: "Ingestion time" },
@@ -50,7 +84,6 @@ export default function Lakehouse() {
       dbTable: "postgres.windows_logs",
       count: "4.8M rows",
       eps: "950 EPS",
-      status: "ACTIVE",
       description: "Active Directory, Kerberos authentications, and PowerShell audits.",
       columns: [
         { name: "timestamp", type: "DateTime", desc: "Event log time" },
@@ -64,7 +97,6 @@ export default function Lakehouse() {
       dbTable: "postgres.linux_logs",
       count: "3.2M rows",
       eps: "680 EPS",
-      status: "ACTIVE",
       description: "SSH logons, systemd processes, and daemon events.",
       columns: [
         { name: "timestamp", type: "DateTime", desc: "System event time" },
@@ -78,7 +110,6 @@ export default function Lakehouse() {
       dbTable: "postgres.legacy_logs",
       count: "1.1M rows",
       eps: "120 EPS",
-      status: "ACTIVE",
       description: "Mainframe transaction journals and RACF access logs.",
       columns: [
         { name: "timestamp", type: "DateTime", desc: "Mainframe transaction time" },
@@ -92,7 +123,6 @@ export default function Lakehouse() {
       dbTable: "postgres.firewall_logs",
       count: "8.9M rows",
       eps: "1,800 EPS",
-      status: "ACTIVE",
       description: "Network transit packets, firewall rules, and port states.",
       columns: [
         { name: "src_ip", type: "String", desc: "Source network IP" },
@@ -106,7 +136,6 @@ export default function Lakehouse() {
       dbTable: "postgres.identity_governance",
       count: "150K rows",
       eps: "Scheduled Sync",
-      status: "ACTIVE",
       description: "SailPoint IGA, role access changes, and SSO events.",
       columns: [
         { name: "request_id", type: "UUID", desc: "Orchestration ticket UUID" },
@@ -120,7 +149,6 @@ export default function Lakehouse() {
       dbTable: "postgres.hardware_inventory",
       count: "1,502 rows",
       eps: "Scheduled Sync",
-      status: "ACTIVE",
       description: "Device types, CPU layout, RAM metrics, and MAC addresses.",
       columns: [
         { name: "device_id", type: "UUID", desc: "Asset system UUID" },
@@ -135,7 +163,6 @@ export default function Lakehouse() {
       dbTable: "postgres.software_inventory",
       count: "4,812 rows",
       eps: "Scheduled Sync",
-      status: "ACTIVE",
       description: "Installed agent binary versions and local dependency paths.",
       columns: [
         { name: "record_id", type: "Int64", desc: "Software package row identifier" },
@@ -144,17 +171,15 @@ export default function Lakehouse() {
         { name: "version", type: "String", desc: "Binary build version" }
       ]
     }
-  });
+  };
 
-  // Mock Rows data
   const mockRows = {
     unstructured: [
       { timestamp: "11:33:02", source_ip: "10.100.12.45", data_type: "EMAIL", raw_content: "Subject: Security Alert Alert - phishing reported on node 'BOS-01'" },
       { timestamp: "11:33:10", source_ip: "10.100.14.78", data_type: "CHAT", raw_content: "Slack: #incident-response: vm containment executed by orchestrator" }
     ],
     windows: [
-      { timestamp: "11:28:05", event_id: 4624, hostname: "boston-ws-01", user_principal: "sridhargs@spinovation.com" },
-      { timestamp: "11:28:15", event_id: 4720, hostname: "dc-prod-01", user_principal: "administrator" }
+      { timestamp: "11:28:05", event_id: 4624, hostname: "boston-ws-01", user_principal: "sridhargs@spinovation.com" }
     ],
     linux: [
       { timestamp: "11:28:07", pid: 902, process: "sshd", message: "Accepted publickey for admin from 10.100.1.10" }
@@ -176,95 +201,52 @@ export default function Lakehouse() {
     ]
   };
 
-  const handleToggleFeedStatus = (key) => {
-    const currentStatus = dataFeeds[key].status;
-    const updatedStatus = currentStatus === "ACTIVE" ? "PAUSED" : "ACTIVE";
-    
-    setDataFeeds(prev => ({
-      ...prev,
-      [key]: {
-        ...prev[key],
-        status: updatedStatus
-      }
-    }));
-    alert(`Data Ingestion feed for ${dataFeeds[key].name} set to: ${updatedStatus}`);
-  };
-
-  const handleGenerateCustomMart = () => {
-    if (!customMartName) {
-      alert("Please provide a name for your custom data mart!");
-      return;
-    }
-    if (selectedFields.length === 0) {
-      alert("Please select at least one field to pivot!");
-      return;
-    }
-
-    const cleanKey = customMartName.toLowerCase().replace(/[^a-z0-9]/g, "");
-    const generatedColumns = selectedFields.map(f => ({
-      name: f,
-      type: "String (Pivoted)",
-      desc: `Pivoted column field: ${f}`
-    }));
-
-    const newMart = {
-      name: `Custom: ${customMartName}`,
-      dbTable: `clickhouse.custom_${cleanKey}`,
-      count: "0 rows",
-      eps: "On Demand",
-      status: "ACTIVE",
-      description: `User-defined custom mart containing pivoted fields: ${selectedFields.join(", ")}`,
-      columns: generatedColumns
-    };
-
-    setDataFeeds(prev => ({
-      ...prev,
-      [cleanKey]: newMart
-    }));
-
-    // Mock row entry
-    mockRows[cleanKey] = [
-      selectedFields.reduce((acc, field) => {
-        acc[field] = "pivoted_value";
-        return acc;
-      }, {})
-    ];
-
-    setSelectedMart(cleanKey);
-    setCustomMartName("");
-    setSelectedFields([]);
-    alert(`Custom Database Mart dynamic provisioning complete! Table ${newMart.dbTable} generated.`);
-  };
-
-  const handleToggleFieldSelection = (field) => {
-    setSelectedFields(prev => 
-      prev.includes(field) ? prev.filter(f => f !== field) : [...prev, field]
+  const getFilteredRows = () => {
+    const rows = mockRows[selectedMart] || [];
+    if (!searchQuery) return rows;
+    return rows.filter(row => 
+      Object.values(row).some(val => 
+        String(val).toLowerCase().includes(searchQuery.toLowerCase())
+      )
     );
   };
 
-  const currentMartSchema = dataFeeds[selectedMart];
-  const activeRows = mockRows[selectedMart] || [];
+  const currentMartSchema = schemas[selectedMart];
+  const activeRows = getFilteredRows();
 
   return (
     <div className="space-y-8" style={{ padding: "12px 24px" }}>
+      
       {/* Header */}
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-          Module 2: Unified Ingestion Lakehouse
+          Unified Ingestion Lakehouse
         </h1>
         <p className="text-slate-500 text-sm mt-1">
-          Real-time log database tracking security telemetry streams, operating systems, network events, and hardware inventories.
+          Real-time log database and routing pipeline. Manage raw data ingestion (including legacy/on-prem API endpoints) and configure Cribl-style filter pipelines to route only what you need.
         </p>
       </div>
 
-      {/* Ingestion & Retention Overview KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Ingestion & Retention Overview KPIs with Inbound/Outbound Optimizations */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="glass-panel p-5 border border-slate-200 bg-white">
-          <span className="text-[10px] font-mono text-slate-400 block font-bold uppercase">Ingestion Rate</span>
+          <span className="text-[10px] font-mono text-slate-400 block font-bold uppercase">Raw Inbound Ingestion</span>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl font-extrabold text-slate-900">{ingestionRate}</span>
             <span className="text-xs font-mono text-slate-500 font-bold">EPS</span>
           </div>
+          <span className="text-[10px] text-slate-400 block mt-1">Total unfiltered stream</span>
+        </div>
+
+        <div className="glass-panel p-5 border border-slate-200 bg-white">
+          <span className="text-[10px] font-mono text-slate-400 block font-bold uppercase">Routed to uSecOps Engine</span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="text-2xl font-extrabold text-violet-650 text-violet-600">{routedRate}</span>
+            <span className="text-xs font-mono text-slate-500 font-bold">EPS</span>
+          </div>
+          <span className="text-[10px] text-emerald-600 block mt-1 font-bold">
+            ▲ Ingestion Savings: {Math.round((1 - routedRate / ingestionRate) * 100)}%
+          </span>
         </div>
 
         <div className="glass-panel p-5 border border-slate-200 bg-white">
@@ -273,6 +255,7 @@ export default function Lakehouse() {
             <span className="text-2xl font-extrabold text-slate-900">{storageUsed.toFixed(2)}</span>
             <span className="text-xs font-mono text-slate-500 font-bold">GB</span>
           </div>
+          <span className="text-[10px] text-slate-400 block mt-1">Raw archive logs included</span>
         </div>
 
         <div className="glass-panel p-5 border border-slate-200 bg-white">
@@ -281,59 +264,157 @@ export default function Lakehouse() {
             <span className="text-2xl font-extrabold text-slate-900">{retentionDays}</span>
             <span className="text-xs font-mono text-slate-500 font-bold">Days</span>
           </div>
+          <span className="text-[10px] text-slate-400 block mt-1">Automatic rollover</span>
         </div>
+      </div>
+
+      {/* NEW: Cribl-style Ingestion Pipeline & Legacy/On-Prem APIs */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Cribl Pipeline Router */}
+        <div className="lg:col-span-2 glass-panel p-6 border border-slate-200 bg-white space-y-4">
+          <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+            <div>
+              <h3 className="text-base font-bold text-slate-800">Cribl Log Stream Router Pipeline</h3>
+              <p className="text-xs text-slate-400">Apply filter rules to drop redundant debug noise or route raw data to clickhouse.unstructured_raw.</p>
+            </div>
+            <span className="text-[9px] font-mono text-violet-600 bg-violet-50 border border-violet-200 px-2 py-0.5 rounded font-bold uppercase">
+              Compliance-Filtering
+            </span>
+          </div>
+
+          {/* Rules List */}
+          <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
+            {routingRules.map((rule) => (
+              <div 
+                key={rule.id}
+                className={`p-3 rounded-lg border flex justify-between items-center font-mono text-xs ${
+                  rule.enabled ? "border-violet-200 bg-violet-50/20" : "border-slate-200 bg-slate-50/50 opacity-60"
+                }`}
+              >
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-800">{rule.name}</span>
+                    <span className={`text-[8px] font-extrabold px-1.5 py-0.2 rounded ${
+                      rule.action === "DROP" ? "bg-rose-50 text-rose-600 border border-rose-200" :
+                      rule.action === "ROUTE" ? "bg-cyan-50 text-cyan-600 border border-cyan-200" :
+                      "bg-violet-50 text-violet-600 border border-violet-200"
+                    }`}>{rule.action}</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1 font-sans">{rule.desc}</p>
+                  <code className="text-[9px] text-cyan-700 bg-slate-100 px-1 py-0.2 rounded mt-1.5 block">matches: {rule.matches}</code>
+                </div>
+                <button
+                  onClick={() => handleToggleRule(rule.id)}
+                  className={`px-3 py-1 rounded text-[10px] font-bold border transition-all ${
+                    rule.enabled ? "border-rose-200 text-rose-600 hover:bg-rose-50" : "border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+                  }`}
+                >
+                  {rule.enabled ? "Deactivate" : "Activate"}
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Add custom rule form */}
+          <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs">
+            <div className="space-y-1">
+              <label className="text-slate-500 block text-[9px] uppercase font-bold">Rule Name</label>
+              <input 
+                type="text" 
+                placeholder="e.g. Drop Info Logs"
+                value={newRuleName}
+                onChange={(e) => setNewRuleName(e.target.value)}
+                className="w-full bg-white border border-slate-200 rounded p-1.5 focus:outline-none"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-slate-500 block text-[9px] uppercase font-bold">Matching Condition</label>
+              <input 
+                type="text" 
+                placeholder="e.g. log_level == 'INFO'"
+                value={newRuleMatch}
+                onChange={(e) => setNewRuleMatch(e.target.value)}
+                className="w-full bg-white border border-slate-200 rounded p-1.5 focus:outline-none"
+              />
+            </div>
+            <div className="space-y-1 flex flex-col justify-between">
+              <label className="text-slate-500 block text-[9px] uppercase font-bold">Action</label>
+              <div className="flex gap-2">
+                <select 
+                  value={newRuleAction}
+                  onChange={(e) => setNewRuleAction(e.target.value)}
+                  className="bg-white border border-slate-200 rounded p-1.5 text-slate-700 flex-1"
+                >
+                  <option value="DROP">DROP</option>
+                  <option value="ROUTE">ROUTE RAW</option>
+                  <option value="FORWARD">FORWARD</option>
+                </select>
+                <button
+                  onClick={handleAddRule}
+                  className="px-3 bg-violet-600 hover:bg-violet-700 text-white rounded font-bold"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Inbound API connections info */}
+        <div className="lg:col-span-1 glass-panel p-6 border border-slate-200 bg-white space-y-4">
+          <h3 className="text-base font-bold text-slate-800 border-b border-slate-100 pb-3">Legacy & On-Prem Ingestion APIs</h3>
+          <div className="space-y-3 font-mono text-xs">
+            {inboundAPIs.map((api) => (
+              <div key={api.id} className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-slate-855">{api.name}</span>
+                  <span className="text-[8px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
+                    {api.status}
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-400">{api.type} &bull; Interval: {api.interval}</div>
+                <code className="text-[9px] text-cyan-700 block truncate">{api.endpoint}</code>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </div>
 
       {/* Available Data Feeds List */}
       <div className="space-y-3">
-        <div className="flex justify-between items-center">
-          <h2 className="text-base font-bold text-slate-800">Operational Data Marts</h2>
-          <span className="text-[10px] font-mono text-slate-400">Right-click or toggle to deactivate default streams</span>
-        </div>
+        <h2 className="text-base font-bold text-slate-800">Operational Data Marts</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {Object.entries(dataFeeds).map(([key, value]) => {
+          {Object.entries(schemas).map(([key, value]) => {
             const isSelected = selectedMart === key;
-            const isActive = value.status === "ACTIVE";
             return (
               <div 
                 key={key}
                 onClick={() => setSelectedMart(key)}
                 className={`p-4 rounded-lg border transition-all cursor-pointer flex flex-col justify-between min-h-[130px] ${
                   isSelected ? "border-violet-500 bg-violet-50/40 shadow-sm" : "border-slate-200 bg-white hover:bg-slate-50/50"
-                } ${!isActive ? "opacity-60" : ""}`}
+                }`}
               >
                 <div className="space-y-1">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-extrabold text-slate-850">{value.name}</span>
-                    <span className={`text-[8px] font-mono font-bold px-1.5 py-0.2 rounded border ${
-                      isActive ? "bg-emerald-50 text-emerald-600 border-emerald-200" : "bg-rose-50 text-rose-600 border-rose-200"
-                    }`}>{value.status}</span>
+                    <span className="text-sm font-extrabold text-slate-855">{value.name}</span>
+                    <span className="text-[9px] font-mono text-slate-400">{value.count}</span>
                   </div>
                   <p className="text-[10px] text-slate-500 leading-normal">{value.description}</p>
                 </div>
                 
-                <div className="flex gap-2 mt-3">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedMart(key);
-                    }}
-                    className={`flex-1 py-1 rounded text-[9px] font-mono font-bold uppercase tracking-wider text-center border transition-all ${
-                      isSelected ? "bg-violet-600 border-violet-600 text-white" : "border-slate-200 text-slate-600 hover:border-violet-400"
-                    }`}
-                  >
-                    Drill Down
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleToggleFeedStatus(key);
-                    }}
-                    className="px-2 py-1 rounded text-[9px] font-mono font-bold uppercase tracking-wider border border-slate-250 bg-slate-50 text-slate-600 hover:bg-slate-100"
-                  >
-                    {isActive ? "Pause" : "Resume"}
-                  </button>
-                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedMart(key);
+                  }}
+                  className={`w-full py-1 rounded text-[9px] font-mono font-bold uppercase tracking-wider text-center mt-3 border transition-all ${
+                    isSelected ? "bg-violet-600 border-violet-600 text-white" : "border-slate-200 text-slate-600 hover:border-violet-400"
+                  }`}
+                >
+                  {isSelected ? "Active Stream" : "Drill Down"}
+                </button>
               </div>
             );
           })}
@@ -344,8 +425,8 @@ export default function Lakehouse() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Drill-down Results Table */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="glass-panel p-6 border border-slate-200 bg-white flex flex-col justify-between min-h-[380px]">
+        <div className="lg:col-span-2">
+          <div className="glass-panel p-6 border border-slate-200 bg-white flex flex-col justify-between min-h-[420px]">
             <div>
               <div className="flex justify-between items-center mb-3">
                 <div>
@@ -370,7 +451,7 @@ export default function Lakehouse() {
             </div>
 
             {/* Ingestion results table */}
-            <div className="flex-1 my-2 overflow-x-auto min-h-[200px]">
+            <div className="flex-1 my-2 overflow-x-auto min-h-[220px]">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-slate-200 text-slate-400 font-mono font-bold uppercase bg-slate-50/50">
@@ -403,72 +484,26 @@ export default function Lakehouse() {
           </div>
         </div>
 
-        {/* Right Panel: Database fields / Excel pivot custom mart builder */}
+        {/* Schema Definition Drawer */}
         <div className="lg:col-span-1 space-y-6">
-          
-          {/* Table Schema metadata */}
           <div className="glass-panel p-6 border border-slate-200 bg-white space-y-4">
             <h3 className="text-base font-bold text-slate-800">Database Fields Schema</h3>
-            <div className="space-y-3 font-mono text-xs max-h-[160px] overflow-y-auto pr-1">
+            <p className="text-xs text-slate-500">{currentMartSchema.description}</p>
+
+            <div className="space-y-3 font-mono text-xs">
               {currentMartSchema.columns.map((col) => (
-                <div key={col.name} className="p-2 bg-slate-50 border border-slate-200 rounded space-y-1">
+                <div key={col.name} className="p-3 bg-slate-50 border border-slate-200 rounded space-y-1">
                   <div className="flex justify-between items-center">
-                    <span className="font-bold text-slate-850">{col.name}</span>
-                    <span className="text-[9px] text-cyan-600 bg-cyan-50 px-1.5 py-0.2 rounded font-bold">
+                    <span className="font-bold text-slate-800">{col.name}</span>
+                    <span className="text-[9px] text-cyan-600 bg-cyan-50 border border-cyan-200 px-1.5 py-0.2 rounded font-bold">
                       {col.type}
                     </span>
                   </div>
+                  <p className="text-[10px] text-slate-500 leading-normal">{col.desc}</p>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Pivot Table Custom Mart Builder */}
-          <div className="glass-panel p-6 border border-slate-200 bg-white space-y-4">
-            <div>
-              <h3 className="text-base font-bold text-slate-800">Excel-Pivot Data Mart Creator</h3>
-              <p className="text-[10px] text-slate-400">Select fields from visible ingestion logs to compile custom partitions</p>
-            </div>
-
-            <div className="space-y-3 font-mono text-xs">
-              <div className="space-y-1">
-                <label className="text-slate-400 block text-[9px] uppercase font-bold">New Custom Mart Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. ad_audit_pivot"
-                  value={customMartName}
-                  onChange={(e) => setCustomMartName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded p-2 text-slate-800"
-                />
-              </div>
-
-              {/* Field checklist */}
-              <div className="space-y-1.5">
-                <span className="text-slate-400 block text-[9px] uppercase font-bold">Pivot Ingestion Fields</span>
-                <div className="border border-slate-200 rounded p-2 bg-slate-50 max-h-[120px] overflow-y-auto grid grid-cols-2 gap-2">
-                  {availableFields.map(f => (
-                    <label key={f} className="flex items-center gap-1.5 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedFields.includes(f)}
-                        onChange={() => handleToggleFieldSelection(f)}
-                        className="rounded text-violet-600 focus:ring-violet-500 w-3.5 h-3.5"
-                      />
-                      <span className="text-[10px] text-slate-655 truncate">{f}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <button
-                onClick={handleGenerateCustomMart}
-                className="w-full py-2 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded uppercase tracking-wider text-[10px]"
-              >
-                ⚙️ Generate Custom Data Mart
-              </button>
-            </div>
-          </div>
-
         </div>
 
       </div>
