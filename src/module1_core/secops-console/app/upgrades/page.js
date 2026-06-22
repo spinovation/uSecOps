@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function Upgrades() {
   const [canaryRate, setCanaryRate] = useState(10);
@@ -10,83 +10,63 @@ export default function Upgrades() {
   const [upgradeLogs, setUpgradeLogs] = useState([]);
   const [rollbackAnomalies, setRollbackAnomalies] = useState(false);
   
-  // Workstation fleet
-  const [workstations, setWorkstations] = useState([
-    { id: "ws-1", hostname: "boston-ws-01", ip: "10.100.12.45", os: "Windows 11", status: "ONLINE", checked: true },
-    { id: "ws-2", hostname: "london-ws-02", ip: "10.100.14.78", os: "Ubuntu 22.04", status: "ONLINE", checked: true },
-    { id: "ws-3", hostname: "tokyo-ws-03", ip: "10.100.15.12", os: "RedHat 9.2", status: "ONLINE", checked: false },
-    { id: "ws-4", hostname: "nyc-ws-04", ip: "10.100.16.88", os: "macOS Sonoma", status: "ONLINE", checked: false },
-    { id: "ws-5", hostname: "mainframe-prod-01", ip: "10.200.4.5", os: "z/OS Mainframe", status: "ONLINE", checked: false }
+  // Clustered Appliance Nodes
+  const [applianceNodes, setApplianceNodes] = useState([
+    { id: "node-1", name: "core-node-boston-01", ip: "10.100.12.45", role: "Module 1: Core", status: "ONLINE", checked: true },
+    { id: "node-2", name: "lakehouse-replica-london-02", ip: "10.100.14.78", role: "Module 2: Lakehouse", status: "ONLINE", checked: true },
+    { id: "node-3", name: "core-node-tokyo-03", ip: "10.100.15.12", role: "Module 1: Core", status: "ONLINE", checked: false },
+    { id: "node-4", name: "lakehouse-replica-nyc-04", ip: "10.100.16.88", role: "Module 2: Lakehouse", status: "ONLINE", checked: false }
   ]);
 
-  // Software Inventory registry
-  const [inventory, setInventory] = useState([
-    { name: "universal-forwarder-v9.1.deb", type: "Agent Binary", staticSeverity: 0, approvedAt: "System Default", signature: "SHA256:88fa2b109cc...", status: "ACTIVE" },
-    { name: "nxlog-agent-v2.0.msi", type: "Agent Binary", staticSeverity: 0, approvedAt: "System Default", signature: "SHA256:1a2c3d4e5f...", status: "ACTIVE" }
-  ]);
+  // Approved Upgrade packages inventory
+  const inventory = [
+    { name: "usecops-core-v2.0.1.tar.gz", type: "Core App Upgrade", approvedAt: "2026-06-20", signature: "SHA256:88fa2b109cc...", status: "ACTIVE" },
+    { name: "lakehouse-partition-v2.0.0.sql", type: "Lakehouse Schema", approvedAt: "2026-06-21", signature: "SHA256:1a2c3d4e5f...", status: "ACTIVE" }
+  ];
 
-  const [selectedBinary, setSelectedBinary] = useState(null);
+  const [selectedPackage, setSelectedPackage] = useState(inventory[0]);
 
-  // Sync approved binaries from vulnerabilities
-  useEffect(() => {
-    const saved = localStorage.getItem("approvedBinaries");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      // Combine defaults with approved ones
-      const combined = [
-        ...inventory.filter(item => !parsed.some(p => p.name === item.name)),
-        ...parsed
-      ];
-      setInventory(combined);
-      if (combined.length > 0) {
-        setSelectedBinary(combined[0]);
-      }
-    } else {
-      setSelectedBinary(inventory[0]);
-    }
-  }, []);
-
-  const handleToggleWorkstation = (id) => {
-    setWorkstations(prev => prev.map(w => w.id === id ? { ...w, checked: !w.checked } : w));
+  const handleToggleNode = (id) => {
+    setApplianceNodes(prev => prev.map(n => n.id === id ? { ...n, checked: !n.checked } : n));
   };
 
-  const handleSelectAllWorkstations = (val) => {
-    setWorkstations(prev => prev.map(w => ({ ...w, checked: val })));
+  const handleSelectAllNodes = (val) => {
+    setApplianceNodes(prev => prev.map(n => ({ ...n, checked: val })));
   };
 
-  const handleTriggerCanary = () => {
+  const handleTriggerUpgrade = () => {
     if (!adminKey) {
       alert("Administrator cryptokey signature is required for authorization!");
       return;
     }
-    const selectedHosts = workstations.filter(w => w.checked);
+    const selectedHosts = applianceNodes.filter(n => n.checked);
     if (selectedHosts.length === 0) {
-      alert("Please select at least one target workstation for the upgrade!");
+      alert("Please select at least one target appliance node for the upgrade!");
       return;
     }
-    if (!selectedBinary) {
-      alert("Please select an approved binary from the inventory!");
+    if (!selectedPackage) {
+      alert("Please select an approved package from the inventory!");
       return;
     }
 
     setIsUpgrading(true);
     setRollbackAnomalies(false);
     setUpgradeLogs([
-      `Initializing OTA session for binary: ${selectedBinary.name}`,
-      `Selected targets: ${selectedHosts.map(h => h.hostname).join(", ")}`,
-      "Verifying unprivileged 'secops-run' user execution environment on target daemons...",
-      "Status: Credentials Verified (No elevation required. Security level sandbox applied.)",
-      "Establishing mutual TLS secure tunnel to containment receivers...",
-      `Piping upgrade stream to canary tier (${canaryRate}% target weight)...`
+      `Initializing unprivileged update session for package: ${selectedPackage.name}`,
+      `Selected targets: ${selectedHosts.map(h => h.name).join(", ")}`,
+      "Verifying unprivileged 'secops-run' user execution environment on target containers...",
+      "Status: Credentials Verified (Standard user credentials - no root/sudo elevation required.)",
+      "Deploying container upgrade packets over local microsegment networks...",
+      `Piping upgrade stream with canary rate scaling (${canaryRate}%)...`
     ]);
 
     setTimeout(() => {
       setUpgradeLogs(prev => [
         ...prev,
-        "Developer Signature Hash: VALIDATED (Matched Spinovation trust store)",
+        "Developer Signature Hash: VALIDATED (Matched trust signature store)",
         "Admin Signature Hash: VALIDATED",
-        "Dual-Key Verification: SUCCESSFUL. Pushing update packages...",
-        "Executing unprivileged setup script: 'secops-run --install-ota'..."
+        "Dual-Key Handshake verification: SUCCESSFUL. Pushing update containers...",
+        "Executing unprivileged update command: 'secops-run --apply-module-upgrade'..."
       ]);
     }, 1500);
 
@@ -94,20 +74,20 @@ export default function Upgrades() {
       if (canaryRate > 50) {
         setUpgradeLogs(prev => [
           ...prev,
-          "ALERT: High-Severity memory anomaly detected on node 'london-ws-02'!",
+          "ALERT: High-Severity memory anomaly detected on container 'lakehouse-replica-london-02'!",
           "Canary verification: FAILURE detected (process crash within audit window).",
-          "INITIATING CANARY CANCEL & AUTOMATED ROLLBACK PROTOCOL...",
-          "Downgrading affected nodes back to stable baseline...",
-          "Canary Rollback Complete: FLEET STABLE. Error logs piped to clickhouse for audit."
+          "INITIATING UNPRIVILEGED CONTAINER ROLLBACK PROTOCOL...",
+          "Restoring backup container state back to stable baseline...",
+          "Canary Rollback Complete: APPLIANCE STABLE."
         ]);
         setRollbackAnomalies(true);
         setIsUpgrading(false);
       } else {
         setUpgradeLogs(prev => [
           ...prev,
-          "Agent host package installations completed successfully.",
-          "Verifying workstation state post-upgrade...",
-          `Update fully applied and verified on selected workstations. Version registry updated.`
+          "Appliance container package updates completed successfully.",
+          "Verifying system state and connections...",
+          `Update fully applied and verified on selected appliance nodes.`
         ]);
         setIsUpgrading(false);
       }
@@ -119,10 +99,10 @@ export default function Upgrades() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-          OTA Upgrade Center & Fleet Control
+          Module 3: Patch & Upgrade Control Panel
         </h1>
         <p className="text-slate-500 text-sm mt-1">
-          Cryptographically signed, unprivileged OTA agent upgrades and canary deployments via secure gRPC control streams.
+          Cryptographically signed, unprivileged module upgrades for Module 1 (Core) and Module 2 (Lakehouse) containers.
         </p>
       </div>
 
@@ -135,15 +115,15 @@ export default function Upgrades() {
           {/* Active Software Inventory Registry */}
           <div className="glass-panel p-6 border border-slate-200">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-slate-800">Approved Software Inventory</h2>
-              <span className="text-xs font-mono text-cyan-600 bg-slate-100 px-2 py-1 rounded">OTA Eligible Registry</span>
+              <h2 className="text-lg font-bold text-slate-800">Approved Upgrade Packages</h2>
+              <span className="text-xs font-mono text-cyan-600 bg-slate-100 px-2 py-1 rounded">Unprivileged Registry</span>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-slate-200 text-slate-400 font-mono font-bold uppercase bg-slate-50/50">
-                    <th className="p-3">Software Name</th>
+                    <th className="p-3">Package Name</th>
                     <th className="p-3">Type</th>
                     <th className="p-3">Approved Date</th>
                     <th className="p-3">Build Signature Hash</th>
@@ -155,9 +135,9 @@ export default function Upgrades() {
                     <tr 
                       key={idx} 
                       className={`hover:bg-slate-50 cursor-pointer ${
-                        selectedBinary?.name === item.name ? "bg-violet-50/60 font-semibold" : ""
+                        selectedPackage?.name === item.name ? "bg-violet-50/60 font-semibold" : ""
                       }`}
-                      onClick={() => setSelectedBinary(item)}
+                      onClick={() => setSelectedPackage(item)}
                     >
                       <td className="p-3 text-slate-900">{item.name}</td>
                       <td className="p-3 text-slate-500">{item.type}</td>
@@ -175,20 +155,20 @@ export default function Upgrades() {
             </div>
           </div>
 
-          {/* Multi-Workstation Selection List */}
+          {/* Multi-Node Selection List */}
           <div className="glass-panel p-6 border border-slate-200">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-slate-800">Target Workstation Fleet</h2>
+              <h2 className="text-lg font-bold text-slate-800">Appliance Clustered Nodes</h2>
               <div className="flex gap-2">
                 <button 
-                  onClick={() => handleSelectAllWorkstations(true)}
+                  onClick={() => handleSelectAllNodes(true)}
                   className="text-xs font-bold text-violet-600 hover:underline"
                 >
                   Select All
                 </button>
                 <span className="text-slate-300">|</span>
                 <button 
-                  onClick={() => handleSelectAllWorkstations(false)}
+                  onClick={() => handleSelectAllNodes(false)}
                   className="text-xs font-bold text-slate-500 hover:underline"
                 >
                   Deselect All
@@ -197,28 +177,28 @@ export default function Upgrades() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {workstations.map((ws) => (
+              {applianceNodes.map((node) => (
                 <div 
-                  key={ws.id}
-                  onClick={() => handleToggleWorkstation(ws.id)}
+                  key={node.id}
+                  onClick={() => handleToggleNode(node.id)}
                   className={`p-4 rounded-lg border cursor-pointer flex items-center justify-between transition-all ${
-                    ws.checked ? "border-violet-500 bg-violet-50/40" : "border-slate-200 bg-white"
+                    node.checked ? "border-violet-500 bg-violet-50/40" : "border-slate-200 bg-white"
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <input 
                       type="checkbox" 
-                      checked={ws.checked}
+                      checked={node.checked}
                       onChange={() => {}} // handled by div click
                       className="rounded border-slate-300 text-violet-600 focus:ring-violet-500"
                     />
                     <div>
-                      <h4 className="text-sm font-bold text-slate-800">{ws.hostname}</h4>
-                      <p className="text-xs text-slate-400 font-mono">{ws.ip} &bull; {ws.os}</p>
+                      <h4 className="text-sm font-bold text-slate-800">{node.name}</h4>
+                      <p className="text-xs text-slate-400 font-mono">{node.ip} &bull; {node.role}</p>
                     </div>
                   </div>
                   <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-200 text-[10px] font-mono font-bold">
-                    {ws.status}
+                    {node.status}
                   </span>
                 </div>
               ))}
@@ -228,12 +208,10 @@ export default function Upgrades() {
           {/* Privilege Audit Log / Architecture Panel */}
           <div className="p-5 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
             <h3 className="text-xs font-mono uppercase text-slate-500 font-bold flex items-center gap-2">
-              🛡️ Unprivileged Agent Upgrade Architecture (secops-run)
+              🛡️ Unprivileged Module Upgrade Architecture (secops-run)
             </h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              uSecOps agents are built to upgrade entirely under the <code className="bg-slate-200 px-1 py-0.5 rounded font-mono text-cyan-700">secops-run</code> daemon account. 
-              <strong> The OTA Upgrade Server never requires root, Administrator, or elevated system privileges to apply binaries on client endpoints.</strong> 
-              All execution streams are verified through standard user-level cryptographic signature handshakes, minimizing attack surfaces.
+            <p className="text-xs text-slate-600 leading-relaxed font-mono">
+              Module 1 (Core) and Module 2 (Lakehouse) containers run under standard sandbox directories. Upgrades are piped over secure VLAN segments and applied by the local <code className="bg-slate-200 px-1 py-0.5 rounded text-cyan-700">secops-run</code> daemon, requiring zero root or privileged credential allocation.
             </p>
           </div>
 
@@ -246,63 +224,55 @@ export default function Upgrades() {
           <div className="glass-panel p-6 border border-slate-200 flex flex-col justify-between">
             <div>
               <h3 className="text-base font-bold text-slate-800">Deployment Topology Map</h3>
-              <p className="text-xs text-slate-400">Live Hub/Spoke dynamic update streams</p>
+              <p className="text-xs text-slate-400">Pulsing update streams to active modules</p>
             </div>
 
             <div className="my-6 bg-slate-900 rounded-lg border border-slate-800 h-[240px] flex items-center justify-center relative overflow-hidden">
               <svg width="100%" height="100%" viewBox="0 0 300 240" className="w-full h-full">
+                
                 {/* Connection lines from center (150, 120) */}
                 {/* Boston Line */}
                 <line 
                   x1="150" y1="120" x2="60" y2="60" 
-                  stroke={workstations[0].checked ? "#8b5cf6" : "#475569"} 
-                  strokeWidth={workstations[0].checked ? "2" : "1"}
-                  className={isUpgrading && workstations[0].checked ? "stroke-dash-animation" : ""}
+                  stroke={applianceNodes[0].checked ? "#8b5cf6" : "#475569"} 
+                  strokeWidth={applianceNodes[0].checked ? "2" : "1"}
+                  className={isUpgrading && applianceNodes[0].checked ? "stroke-dash-animation" : ""}
                   strokeDasharray="5, 5"
                 />
                 {/* London Line */}
                 <line 
                   x1="150" y1="120" x2="240" y2="60" 
-                  stroke={workstations[1].checked ? "#8b5cf6" : "#475569"} 
-                  strokeWidth={workstations[1].checked ? "2" : "1"}
-                  className={isUpgrading && workstations[1].checked ? "stroke-dash-animation" : ""}
+                  stroke={applianceNodes[1].checked ? "#8b5cf6" : "#475569"} 
+                  strokeWidth={applianceNodes[1].checked ? "2" : "1"}
+                  className={isUpgrading && applianceNodes[1].checked ? "stroke-dash-animation" : ""}
                   strokeDasharray="5, 5"
                 />
                 {/* Tokyo Line */}
                 <line 
                   x1="150" y1="120" x2="50" y2="180" 
-                  stroke={workstations[2].checked ? "#8b5cf6" : "#475569"} 
-                  strokeWidth={workstations[2].checked ? "2" : "1"}
-                  className={isUpgrading && workstations[2].checked ? "stroke-dash-animation" : ""}
+                  stroke={applianceNodes[2].checked ? "#8b5cf6" : "#475569"} 
+                  strokeWidth={applianceNodes[2].checked ? "2" : "1"}
+                  className={isUpgrading && applianceNodes[2].checked ? "stroke-dash-animation" : ""}
                   strokeDasharray="5, 5"
                 />
                 {/* NYC Line */}
                 <line 
                   x1="150" y1="120" x2="250" y2="180" 
-                  stroke={workstations[3].checked ? "#8b5cf6" : "#475569"} 
-                  strokeWidth={workstations[3].checked ? "2" : "1"}
-                  className={isUpgrading && workstations[3].checked ? "stroke-dash-animation" : ""}
-                  strokeDasharray="5, 5"
-                />
-                {/* Mainframe Line */}
-                <line 
-                  x1="150" y1="120" x2="150" y2="200" 
-                  stroke={workstations[4].checked ? "#8b5cf6" : "#475569"} 
-                  strokeWidth={workstations[4].checked ? "2" : "1"}
-                  className={isUpgrading && workstations[4].checked ? "stroke-dash-animation" : ""}
+                  stroke={applianceNodes[3].checked ? "#8b5cf6" : "#475569"} 
+                  strokeWidth={applianceNodes[3].checked ? "2" : "1"}
+                  className={isUpgrading && applianceNodes[3].checked ? "stroke-dash-animation" : ""}
                   strokeDasharray="5, 5"
                 />
 
                 {/* Animated Pulsing Circles during upgrades */}
-                {isUpgrading && workstations.map((ws, i) => {
-                  if (!ws.checked) return null;
+                {isUpgrading && applianceNodes.map((node, i) => {
+                  if (!node.checked) return null;
                   let targetX = 60, targetY = 60;
                   if (i === 1) { targetX = 240; targetY = 60; }
                   if (i === 2) { targetX = 50; targetY = 180; }
                   if (i === 3) { targetX = 250; targetY = 180; }
-                  if (i === 4) { targetX = 150; targetY = 200; }
                   return (
-                    <circle key={ws.id} cx="150" cy="120" r="4" fill="#10b981">
+                    <circle key={node.id} cx="150" cy="120" r="4" fill="#10b981">
                       <animateMotion 
                         path={`M 0 0 L ${targetX - 150} ${targetY - 120}`} 
                         dur="1.5s" 
@@ -314,28 +284,24 @@ export default function Upgrades() {
 
                 {/* Hub node */}
                 <circle cx="150" cy="120" r="16" fill="#8b5cf6" className={isUpgrading ? "animate-pulse" : ""} />
-                <text x="150" y="124" textAnchor="middle" fill="white" fontSize="9" fontWeight="bold">OTA</text>
+                <text x="150" y="124" textAnchor="middle" fill="white" fontSize="9" fontWeight="bold">PATCH</text>
 
                 {/* Spoke nodes */}
                 {/* Boston */}
-                <circle cx="60" cy="60" r="10" fill={workstations[0].checked ? "#4f46e5" : "#1e293b"} />
-                <text x="60" y="45" textAnchor="middle" fill="#94a3b8" fontSize="8" fontFamily="monospace">BOS</text>
+                <circle cx="60" cy="60" r="10" fill={applianceNodes[0].checked ? "#4f46e5" : "#1e293b"} />
+                <text x="60" y="45" textAnchor="middle" fill="#94a3b8" fontSize="8" fontFamily="monospace">CORE1</text>
 
                 {/* London */}
-                <circle cx="240" cy="60" r="10" fill={workstations[1].checked ? "#4f46e5" : "#1e293b"} />
-                <text x="240" y="45" textAnchor="middle" fill="#94a3b8" fontSize="8" fontFamily="monospace">LDN</text>
+                <circle cx="240" cy="60" r="10" fill={applianceNodes[1].checked ? "#4f46e5" : "#1e293b"} />
+                <text x="240" y="45" textAnchor="middle" fill="#94a3b8" fontSize="8" fontFamily="monospace">LAKE1</text>
 
                 {/* Tokyo */}
-                <circle cx="50" cy="180" r="10" fill={workstations[2].checked ? "#4f46e5" : "#1e293b"} />
-                <text x="50" y="198" textAnchor="middle" fill="#94a3b8" fontSize="8" fontFamily="monospace">NRT</text>
+                <circle cx="50" cy="180" r="10" fill={applianceNodes[2].checked ? "#4f46e5" : "#1e293b"} />
+                <text x="50" y="198" textAnchor="middle" fill="#94a3b8" fontSize="8" fontFamily="monospace">CORE2</text>
 
                 {/* NYC */}
-                <circle cx="250" cy="180" r="10" fill={workstations[3].checked ? "#4f46e5" : "#1e293b"} />
-                <text x="250" y="198" textAnchor="middle" fill="#94a3b8" fontSize="8" fontFamily="monospace">NYC</text>
-
-                {/* Mainframe */}
-                <circle cx="150" cy="200" r="10" fill={workstations[4].checked ? "#4f46e5" : "#1e293b"} />
-                <text x="150" y="218" textAnchor="middle" fill="#94a3b8" fontSize="8" fontFamily="monospace">MF01</text>
+                <circle cx="250" cy="180" r="10" fill={applianceNodes[3].checked ? "#4f46e5" : "#1e293b"} />
+                <text x="250" y="198" textAnchor="middle" fill="#94a3b8" fontSize="8" fontFamily="monospace">LAKE2</text>
               </svg>
             </div>
 
@@ -343,7 +309,7 @@ export default function Upgrades() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-semibold text-slate-700">Canary Scale</span>
+                  <span className="font-semibold text-slate-700 font-mono">Canary Rate</span>
                   <span className="font-mono text-cyan-600 font-bold">{canaryRate}% of fleet</span>
                 </div>
                 <input
@@ -369,11 +335,11 @@ export default function Upgrades() {
               </div>
 
               <button
-                onClick={handleTriggerCanary}
+                onClick={handleTriggerUpgrade}
                 disabled={isUpgrading}
                 className="w-full btn-glass btn-glass-success justify-center text-xs py-2.5 font-bold uppercase tracking-wider font-mono"
               >
-                {isUpgrading ? "⚡ Pushing Agent Binaries..." : "🚀 Deploy Approved OTA Update"}
+                {isUpgrading ? "⚡ Pushing Packages..." : "🚀 Deploy Signed Module Upgrade"}
               </button>
             </div>
           </div>
@@ -385,7 +351,7 @@ export default function Upgrades() {
               {upgradeLogs.length > 0 ? (
                 upgradeLogs.map((log, idx) => {
                   const isAnomaly = log.includes("ALERT") || log.includes("FAILURE");
-                  const isRollback = log.includes("ROLLBACK") || log.includes("Downgrading");
+                  const isRollback = log.includes("ROLLBACK") || log.includes("Restoring");
                   
                   let txtColor = "text-cyan-300";
                   if (isAnomaly) txtColor = "text-rose-400 font-bold";
@@ -400,7 +366,7 @@ export default function Upgrades() {
                 })
               ) : (
                 <div className="text-slate-600 flex items-center justify-center h-full text-center">
-                  Control channel idle. Select target workstations and trigger deployment.
+                  Control channel idle. Select target nodes and deploy update.
                 </div>
               )}
             </div>
