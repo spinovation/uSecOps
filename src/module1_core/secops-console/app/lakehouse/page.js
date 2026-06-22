@@ -36,6 +36,15 @@ export default function Lakehouse() {
   const [migrationDest, setMigrationDest] = useState("EU_WEST_1");
   const [isMigrating, setIsMigrating] = useState(false);
 
+  // Excel-style Pivot Data Mart Builder state
+  const [pivotSource, setPivotSource] = useState("unstructured");
+  const [pivotRows, setPivotRows] = useState([]);
+  const [pivotAggCol, setPivotAggCol] = useState("source_ip");
+  const [pivotFunction, setPivotFunction] = useState("COUNT");
+  const [newMartName, setNewMartName] = useState("custom_pivot_mart");
+  const [dynamicMarts, setDynamicMarts] = useState({});
+  const [isGeneratingPivot, setIsGeneratingPivot] = useState(false);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setIngestionRate(prev => Math.floor(prev + (Math.random() * 400 - 200)));
@@ -61,7 +70,7 @@ export default function Lakehouse() {
     }, 2000);
   };
 
-  const schemas = {
+  const coreSchemas = {
     unstructured: {
       name: "Unstructured & Raw Logs",
       dbTable: "clickhouse.unstructured_raw",
@@ -170,7 +179,7 @@ export default function Lakehouse() {
     }
   };
 
-  const mockRows = {
+  const coreMockRows = {
     unstructured: [
       { timestamp: "11:33:02", source_ip: "10.100.12.45", data_type: "EMAIL", raw_content: "Subject: Security Alert - phishing reported", jurisdiction_region: "EU_WEST_1" },
       { timestamp: "11:33:10", source_ip: "10.100.14.78", data_type: "CHAT", raw_content: "Slack: vm containment executed", jurisdiction_region: "US_EAST_2" }
@@ -196,6 +205,108 @@ export default function Lakehouse() {
     software: [
       { record_id: 1001, hostname: "boston-ws-01", software_name: "nxlog-agent", version: "2.1.0" }
     ]
+  };
+
+  // Compile active schemas and mock rows with user-created custom data marts
+  const schemas = { ...coreSchemas, ...dynamicMarts };
+  const mockRows = {
+    ...coreMockRows,
+    ...Object.keys(dynamicMarts).reduce((acc, cur) => {
+      acc[cur] = dynamicMarts[cur].rowsData;
+      return acc;
+    }, {})
+  };
+
+  const handleBuildPivot = () => {
+    if (!newMartName) {
+      alert("Please enter a target custom table name!");
+      return;
+    }
+    if (pivotRows.length === 0) {
+      alert("Please select at least one row dimension to pivot!");
+      return;
+    }
+
+    setIsGeneratingPivot(true);
+
+    setTimeout(() => {
+      const baseRows = mockRows[pivotSource] || [];
+      const groups = {};
+
+      baseRows.forEach(row => {
+        const keyParts = pivotRows.map(dim => row[dim] || "N/A");
+        const key = keyParts.join(" | ");
+        if (!groups[key]) {
+          groups[key] = {
+            dimensions: {},
+            values: []
+          };
+          pivotRows.forEach((dim, idx) => {
+            groups[key].dimensions[dim] = keyParts[idx];
+          });
+        }
+        
+        let rawVal = row[pivotAggCol];
+        let val = parseFloat(rawVal);
+        if (isNaN(val)) {
+          val = typeof rawVal === "string" ? rawVal.length : 1;
+        }
+        groups[key].values.push(val);
+      });
+
+      const summaryRows = Object.keys(groups).map(k => {
+        const group = groups[k];
+        let aggValue = 0;
+        if (pivotFunction === "COUNT") {
+          aggValue = group.values.length;
+        } else if (pivotFunction === "SUM") {
+          aggValue = group.values.reduce((sum, v) => sum + v, 0);
+        } else if (pivotFunction === "AVG") {
+          aggValue = group.values.length > 0 ? (group.values.reduce((sum, v) => sum + v, 0) / group.values.length) : 0;
+        } else if (pivotFunction === "MAX") {
+          aggValue = Math.max(...group.values);
+        }
+
+        return {
+          ...group.dimensions,
+          aggregated_value: Number(aggValue.toFixed(2))
+        };
+      });
+
+      const customCols = pivotRows.map(dim => {
+        const baseCol = schemas[pivotSource].columns.find(c => c.name === dim);
+        return {
+          name: dim,
+          type: baseCol ? baseCol.type : "String",
+          desc: `Dimension: ${dim}`
+        };
+      });
+      customCols.push({
+        name: "aggregated_value",
+        type: "Float64",
+        desc: `${pivotFunction} of ${pivotAggCol}`
+      });
+
+      const martKey = newMartName.toLowerCase().replace(/[^a-z0-9_]/g, "_");
+      const customMart = {
+        name: `Pivot: ${newMartName}`,
+        dbTable: `clickhouse.custom_${martKey}`,
+        count: `${summaryRows.length} rows`,
+        eps: "Materialized View",
+        description: `Pivoted view of ${schemas[pivotSource].name} grouped by ${pivotRows.join(", ")}.`,
+        columns: customCols,
+        rowsData: summaryRows
+      };
+
+      setDynamicMarts(prev => ({
+        ...prev,
+        [martKey]: customMart
+      }));
+
+      setSelectedMart(martKey);
+      setIsGeneratingPivot(false);
+      alert(`Success! Materialized View "clickhouse.custom_${martKey}" generated successfully.`);
+    }, 1200);
   };
 
   const getFilteredRows = () => {
@@ -409,6 +520,142 @@ export default function Lakehouse() {
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* EXCEL-STYLE PIVOT DATA MART BUILDER */}
+      <div className="glass-panel p-6 border border-slate-200 bg-white space-y-4">
+        <div>
+          <h2 className="text-lg font-bold text-slate-800">Pivot-Table Custom Data Mart Builder</h2>
+          <p className="text-xs text-slate-400 mt-0.5">Drag-and-drop or select fields from raw streams to provision new materialized views and custom structured data marts.</p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-2">
+          {/* Controls Column */}
+          <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 font-mono text-xs">
+            {/* Step 1: Base Source Table & Row Dimensions */}
+            <div className="space-y-4 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+              <div>
+                <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">1. Select Base Stream Source</label>
+                <select 
+                  value={pivotSource}
+                  onChange={(e) => {
+                    setPivotSource(e.target.value);
+                    setPivotRows([]); // Reset chosen dimensions
+                    // default aggregation column
+                    const firstCol = schemas[e.target.value]?.columns[0]?.name || "";
+                    setPivotAggCol(firstCol);
+                  }}
+                  className="w-full bg-white border border-slate-200 rounded p-1.5 focus:outline-none focus:border-violet-500 font-sans"
+                >
+                  {Object.entries(coreSchemas).map(([key, schema]) => (
+                    <option key={key} value={key}>{schema.name} ({schema.dbTable})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1.5">2. Group By Dimensions (Rows)</label>
+                <div className="space-y-1.5 max-h-[140px] overflow-y-auto bg-white p-2 border border-slate-200 rounded font-sans">
+                  {schemas[pivotSource]?.columns.map((col) => (
+                    <label key={col.name} className="flex items-center gap-2 hover:bg-slate-50 p-0.5 rounded cursor-pointer text-xs">
+                      <input 
+                        type="checkbox"
+                        checked={pivotRows.includes(col.name)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setPivotRows(prev => [...prev, col.name]);
+                          } else {
+                            setPivotRows(prev => prev.filter(r => r !== col.name));
+                          }
+                        }}
+                        className="rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                      />
+                      <span className="text-slate-700 font-medium">{col.name}</span>
+                      <span className="text-[9px] font-mono text-slate-400 bg-slate-100 px-1 rounded">{col.type}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Step 2: Aggregation, Dest & Generate */}
+            <div className="space-y-4 p-4 bg-slate-50 border border-slate-200 rounded-lg flex flex-col justify-between">
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">3. Function</label>
+                    <select
+                      value={pivotFunction}
+                      onChange={(e) => setPivotFunction(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded p-1.5 focus:outline-none focus:border-violet-500 font-sans"
+                    >
+                      <option value="COUNT">COUNT</option>
+                      <option value="SUM">SUM</option>
+                      <option value="AVG">AVG</option>
+                      <option value="MAX">MAX</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">4. Agg Column</label>
+                    <select
+                      value={pivotAggCol}
+                      onChange={(e) => setPivotAggCol(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded p-1.5 focus:outline-none focus:border-violet-500 font-sans"
+                    >
+                      {schemas[pivotSource]?.columns.map((col) => (
+                        <option key={col.name} value={col.name}>{col.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">5. Custom Table Target Name</label>
+                  <div className="flex items-center bg-white border border-slate-200 rounded px-2 py-1.5 focus-within:border-violet-500">
+                    <span className="text-slate-400 text-[10px] mr-1">clickhouse.custom_</span>
+                    <input 
+                      type="text" 
+                      value={newMartName} 
+                      onChange={(e) => setNewMartName(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))} 
+                      className="bg-transparent focus:outline-none w-full text-slate-800 font-semibold"
+                      placeholder="e.g. windows_auth_summary"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={handleBuildPivot}
+                disabled={isGeneratingPivot}
+                className="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold rounded p-2 text-center uppercase tracking-wider text-[10px] mt-4"
+              >
+                {isGeneratingPivot ? "⚡ Provisioning Materialized View..." : "📊 Materialize Custom Pivot Mart"}
+              </button>
+            </div>
+          </div>
+
+          {/* Diagram / Preview Column */}
+          <div className="lg:col-span-1 p-4 border border-dashed border-slate-200 rounded-lg flex flex-col justify-between text-xs font-mono bg-slate-50/50">
+            <div>
+              <span className="text-[9px] uppercase font-bold text-slate-400 block mb-2">Logical MatView Pipeline Preview</span>
+              <div className="bg-[#0f172a] text-cyan-400 p-3 rounded text-[10px] space-y-1.5 leading-relaxed overflow-x-auto min-h-[140px]">
+                <div><span className="text-pink-400">CREATE MATERIALIZED VIEW</span> clickhouse.custom_{newMartName || "table"}</div>
+                <div><span className="text-pink-400">ENGINE</span> = Distributed</div>
+                <div><span className="text-pink-400">POPULATE AS</span></div>
+                <div><span className="text-pink-400">SELECT</span></div>
+                {pivotRows.map((r, idx) => (
+                  <div key={r} className="pl-4">  {r}{idx < pivotRows.length - 1 ? "," : ""},</div>
+                ))}
+                <div className="pl-4"><span className="text-yellow-400">{pivotFunction}</span>({pivotAggCol}) <span className="text-pink-400">AS</span> aggregated_value</div>
+                <div><span className="text-pink-400">FROM</span> {schemas[pivotSource]?.dbTable}</div>
+                <div><span className="text-pink-400">GROUP BY</span> {pivotRows.join(", ") || "[Choose dimensions]"}</div>
+              </div>
+            </div>
+            <div className="text-[10px] text-slate-400 mt-2 font-sans">
+              ℹ️ Materializing this pivot maps the query pipeline directly into the Vector routing streams. ClickHouse distributes partitions automatically to prevent data stalls.
+            </div>
+          </div>
         </div>
       </div>
 
