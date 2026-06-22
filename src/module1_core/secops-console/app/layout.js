@@ -26,7 +26,7 @@ export default function RootLayout({ children }) {
       title: "Operations",
       items: [
         { name: "Overview Dashboard", path: "/", icon: "dashboard" },
-        { name: "Incident Cases (SOAR)", path: "/cases", icon: "cases" },
+        { name: "Incident Cases", path: "/cases", icon: "cases" },
         { name: "Virtual Entity Demux", path: "/entities", icon: "entities" }
       ]
     },

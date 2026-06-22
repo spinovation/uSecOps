@@ -60,11 +60,11 @@ export default function Dashboard() {
     return () => clearInterval(timer);
   }, []);
 
-  const triggerSOARPlaybook = (alertId, playbookName) => {
+  const triggerPlaybook = (alertId, playbookName) => {
     setActivePlaybookId(alertId);
     setIsExecuting(true);
     setPlaybookLogs([
-      `[SOAR Core] Starting containment sequence for Alert ${alertId}...`,
+      `[Playbook Core] Starting containment sequence for Alert ${alertId}...`,
       `[OTel Network] Resolving virtual interface routes...`,
       `[Playbook] Triggering quarantine action: ${playbookName}...`
     ]);
@@ -327,7 +327,7 @@ export default function Dashboard() {
                     <div className="flex gap-2">
                       {alert.status === "ACTIVE" ? (
                         <button
-                          onClick={() => triggerSOARPlaybook(alert.id, "quarantine_host_vm")}
+                          onClick={() => triggerPlaybook(alert.id, "quarantine_host_vm")}
                           disabled={isExecuting}
                           className="btn-sentinel"
                         >
@@ -351,10 +351,10 @@ export default function Dashboard() {
           </table>
         </div>
 
-        {/* Dynamic SOAR Action Console */}
+        {/* Dynamic Playbook Action Console */}
         {activePlaybookId && (
           <div className="border-t border-slate-200 pt-6 space-y-3">
-            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono">Live SOAR Playbook Execution Terminal</h3>
+            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono">Live Playbook Execution Terminal</h3>
             <div className="p-4 bg-[#0f172a] border border-slate-800 rounded-md font-mono text-[11px] text-cyan-400 space-y-1.5 max-h-[160px] overflow-y-auto">
               {playbookLogs.map((log, idx) => (
                 <div key={idx} className="flex gap-2">

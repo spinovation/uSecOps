@@ -165,10 +165,10 @@ export default function Cases() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-          Relational Case Ticketing & SOAR Workspace
+          Relational Case Ticketing Workspace
         </h1>
         <p className="text-slate-500 text-sm mt-1">
-          Relational Postgres ticket models synchronized with human-in-the-loop SOAR containment orchestration triggers and mail notification alerts.
+          Relational Postgres ticket models synchronized with human-in-the-loop containment orchestration triggers and mail notification alerts.
         </p>
       </div>
 
@@ -295,10 +295,10 @@ export default function Cases() {
                   )}
                 </div>
 
-                {/* SOAR playbooks */}
+                {/* Containment playbooks */}
                 {selectedCase.playbooks.length > 0 && (
                   <div className="space-y-4 pt-4 border-t border-slate-200">
-                    <h3 className="text-sm font-bold text-slate-800">SOAR Containment Playbooks</h3>
+                    <h3 className="text-sm font-bold text-slate-800">Containment Playbooks</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {selectedCase.playbooks.map((playbook, idx) => (
                         <div key={idx} className="p-4 rounded-lg bg-slate-50 border border-slate-200 flex flex-col justify-between gap-3">
@@ -451,7 +451,7 @@ export default function Cases() {
                 Containment Action Authorization Request
               </h2>
               <p className="text-xs text-slate-700">
-                This SOAR playbook step has a <span className="text-rose-600 font-bold">HIGH IMPACT</span> rating and demands physical administrative approval before execution.
+                This containment playbook step has a <span className="text-rose-600 font-bold">HIGH IMPACT</span> rating and demands physical administrative approval before execution.
               </p>
             </div>
 
