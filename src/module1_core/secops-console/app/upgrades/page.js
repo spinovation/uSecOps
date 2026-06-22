@@ -18,13 +18,23 @@ export default function Upgrades() {
     { id: "node-4", name: "lakehouse-replica-nyc-04", ip: "10.100.16.88", role: "Module 2: Lakehouse", status: "ONLINE", checked: false }
   ]);
 
+  // Real-time Third-Party Component Vulnerability Tracking
+  const [vulnerabilities, setVulnerabilities] = useState([
+    { id: "vul-1", name: "Vector Log Router", license: "MPL-2.0", version: "v0.34.0", cve: "CVE-2026-1192", severity: "HIGH", description: "Out-of-bounds read in syslog parser under heavy workloads.", status: "VULNERABLE" },
+    { id: "vul-2", name: "Redpanda Engine", license: "BSL 1.1", version: "v23.2.1", cve: "CVE-2026-4481", severity: "CRITICAL", description: "Denial of service via malformed Kafka protocol telemetry buffers.", status: "VULNERABLE" },
+    { id: "vul-3", name: "OpenSSL Library", license: "Apache-2.0", version: "v3.0.8", cve: "CVE-2026-0042", severity: "MEDIUM", description: "Side-channel timing attack on RSA decryption routines.", status: "VULNERABLE" }
+  ]);
+
   // Approved Upgrade packages inventory
-  const inventory = [
+  const [inventory, setInventory] = useState([
     { name: "usecops-core-v2.0.1.tar.gz", type: "Core App Upgrade", approvedAt: "2026-06-20", signature: "SHA256:88fa2b109cc...", status: "ACTIVE" },
     { name: "lakehouse-partition-v2.0.0.sql", type: "Lakehouse Schema", approvedAt: "2026-06-21", signature: "SHA256:1a2c3d4e5f...", status: "ACTIVE" }
-  ];
+  ]);
 
-  const [selectedPackage, setSelectedPackage] = useState(inventory[0]);
+  // Human approval staging area
+  const [pendingPatches, setPendingPatches] = useState([]);
+
+  const [selectedPackage, setSelectedPackage] = useState(null);
 
   const handleToggleNode = (id) => {
     setApplianceNodes(prev => prev.map(n => n.id === id ? { ...n, checked: !n.checked } : n));
@@ -32,6 +42,58 @@ export default function Upgrades() {
 
   const handleSelectAllNodes = (val) => {
     setApplianceNodes(prev => prev.map(n => ({ ...n, checked: val })));
+  };
+
+  // Generate patch (with automatic pipeline checks)
+  const handlePreparePatch = (vulId) => {
+    const vul = vulnerabilities.find(v => v.id === vulId);
+    if (!vul) return;
+
+    // Check if already prepared
+    if (vul.status === "PATCH_PREPARED") {
+      alert("A patch package is already prepared and awaiting approval for this component.");
+      return;
+    }
+
+    const patchName = `${vul.name.toLowerCase().replace(/ /g, "-")}-patch-${vul.cve.toLowerCase()}.tar.gz`;
+    const newPatch = {
+      id: `patch-${Date.now()}`,
+      vulId: vul.id,
+      name: patchName,
+      targetComponent: vul.name,
+      cveFixed: vul.cve,
+      license: vul.license,
+      developerSignature: "SHA256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      status: "PENDING_APPROVAL"
+    };
+
+    setPendingPatches(prev => [...prev, newPatch]);
+    setVulnerabilities(prev => prev.map(v => v.id === vulId ? { ...v, status: "PATCH_PREPARED" } : v));
+  };
+
+  // Human approval step: cryptographic signing
+  const handleApprovePatch = (patchId) => {
+    if (!adminKey) {
+      alert("Administrator approval key is required to sign and authorize the patch package!");
+      return;
+    }
+    const patch = pendingPatches.find(p => p.id === patchId);
+    if (!patch) return;
+
+    // Move to approved inventory
+    const approvedPkg = {
+      name: patch.name,
+      type: `${patch.targetComponent} Patch (${patch.license})`,
+      approvedAt: new Date().toISOString().split("T")[0],
+      signature: patch.developerSignature.substring(0, 18) + "...",
+      status: "ACTIVE"
+    };
+
+    setInventory(prev => [...prev, approvedPkg]);
+    setSelectedPackage(approvedPkg);
+    setPendingPatches(prev => prev.filter(p => p.id !== patchId));
+    setVulnerabilities(prev => prev.map(v => v.id === patch.vulId ? { ...v, status: "RESOLVED" } : v));
+    alert(`Success! Patch ${patch.name} has been cryptographically signed, approved, and added to the deployment registry.`);
   };
 
   const handleTriggerUpgrade = () => {
@@ -45,7 +107,7 @@ export default function Upgrades() {
       return;
     }
     if (!selectedPackage) {
-      alert("Please select an approved package from the inventory!");
+      alert("Please select an approved package from the registry table!");
       return;
     }
 
@@ -112,10 +174,119 @@ export default function Upgrades() {
         {/* Left Column - Inventory & Fleet Selection */}
         <div className="lg:col-span-2 space-y-6">
           
+          {/* REAL-TIME THIRD-PARTY VULNERABILITY TRACKER */}
+          <div className="glass-panel p-6 border border-slate-200 space-y-4 bg-white">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <div>
+                <h2 className="text-lg font-bold text-slate-800">Real-Time Third-Party Vulnerability Tracker</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Scans active container dependencies, libraries, and open-source licensing compliance.</p>
+              </div>
+              <span className="text-[10px] font-mono text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded font-bold uppercase">
+                Vulnerability Scan Active
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-400 font-mono font-bold uppercase bg-slate-50/50">
+                    <th className="p-3">Component</th>
+                    <th className="p-3">License</th>
+                    <th className="p-3">Version</th>
+                    <th className="p-3">CVE Reference</th>
+                    <th className="p-3">Severity</th>
+                    <th className="p-3">Patch Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-mono">
+                  {vulnerabilities.map((vul) => (
+                    <tr key={vul.id} className="hover:bg-slate-50">
+                      <td className="p-3">
+                        <div className="font-semibold text-slate-900">{vul.name}</div>
+                        <div className="text-[10px] text-slate-400 font-sans mt-0.5">{vul.description}</div>
+                      </td>
+                      <td className="p-3">
+                        <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                          vul.license === "MPL-2.0" ? "bg-cyan-50 text-cyan-600 border border-cyan-200" :
+                          vul.license === "BSL 1.1" ? "bg-amber-50 text-amber-600 border border-amber-200" :
+                          "bg-slate-50 text-slate-600 border border-slate-200"
+                        }`}>{vul.license}</span>
+                      </td>
+                      <td className="p-3 text-slate-500">{vul.version}</td>
+                      <td className="p-3 text-rose-600">{vul.cve}</td>
+                      <td className="p-3">
+                        <span className={`px-1.5 py-0.2 rounded text-[9px] font-extrabold ${
+                          vul.severity === "CRITICAL" ? "bg-rose-100 text-rose-700" :
+                          vul.severity === "HIGH" ? "bg-orange-100 text-orange-700" :
+                          "bg-yellow-100 text-yellow-700"
+                        }`}>{vul.severity}</span>
+                      </td>
+                      <td className="p-3">
+                        {vul.status === "VULNERABLE" && (
+                          <button
+                            onClick={() => handlePreparePatch(vul.id)}
+                            className="bg-violet-600 hover:bg-violet-700 text-white text-[10px] font-bold px-2 py-1 rounded transition-all"
+                          >
+                            Prepare Patch
+                          </button>
+                        )}
+                        {vul.status === "PATCH_PREPARED" && (
+                          <span className="text-[10px] text-amber-600 font-bold bg-amber-50 px-2 py-1 rounded border border-amber-200">
+                            AWAITING SIGNING
+                          </span>
+                        )}
+                        {vul.status === "RESOLVED" && (
+                          <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
+                            RESOLVED
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* HUMAN APPROVAL & SIGNING QUEUE */}
+          {pendingPatches.length > 0 && (
+            <div className="glass-panel p-6 border border-slate-200 space-y-4 bg-white border-l-4 border-l-amber-500">
+              <div>
+                <h2 className="text-lg font-bold text-slate-800">Awaiting Human Approval & Signing</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Administrator review and cryptographic key injection is required to sign and authorize prepared patch packages.</p>
+              </div>
+
+              <div className="space-y-3">
+                {pendingPatches.map((patch) => (
+                  <div key={patch.id} className="p-4 bg-slate-50 border border-slate-200 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 font-mono text-xs">
+                    <div>
+                      <div className="font-bold text-slate-800">{patch.name}</div>
+                      <div className="text-[10px] text-slate-500 mt-1">
+                        Targets: <span className="text-slate-700 font-semibold">{patch.targetComponent}</span> &bull; 
+                        Fixes: <span className="text-rose-600 font-semibold">{patch.cveFixed}</span> &bull;
+                        License: <span className="text-cyan-600 font-semibold">{patch.license}</span>
+                      </div>
+                      <div className="text-[9px] text-slate-400 mt-0.5">Developer Signature: {patch.developerSignature}</div>
+                    </div>
+                    <button
+                      onClick={() => handleApprovePatch(patch.id)}
+                      className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-wider transition-all"
+                    >
+                      Approve & Sign Patch
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Active Software Inventory Registry */}
           <div className="glass-panel p-6 border border-slate-200">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-slate-800">Approved Upgrade Packages</h2>
+              <div>
+                <h2 className="text-lg font-bold text-slate-800">Approved Upgrade Packages</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Select a cryptographically approved package below to deploy to target nodes.</p>
+              </div>
               <span className="text-xs font-mono text-cyan-600 bg-slate-100 px-2 py-1 rounded">Unprivileged Registry</span>
             </div>
 
@@ -127,7 +298,7 @@ export default function Upgrades() {
                     <th className="p-3">Type</th>
                     <th className="p-3">Approved Date</th>
                     <th className="p-3">Build Signature Hash</th>
-                    <th className="p-3">Action</th>
+                    <th className="p-3">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-mono">

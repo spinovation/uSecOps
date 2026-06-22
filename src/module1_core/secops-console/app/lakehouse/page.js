@@ -10,7 +10,14 @@ export default function Lakehouse() {
   const [selectedMart, setSelectedMart] = useState("unstructured");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Ingestion Pipeline Routing rules (Cribl-style)
+  // Inbound API Sources (Legacy & On-Prem)
+  const [inboundAPIs] = useState([
+    { id: "api-1", name: "IBM AS/400 QAUDJRN Feed", type: "Legacy Pull", endpoint: "10.200.4.5:9450/api/journal", interval: "30s", status: "ACTIVE" },
+    { id: "api-2", name: "On-Prem Oracle Audit Log", type: "DB Poller", endpoint: "jdbc:oracle:thin:@10.100.22.4:1521/audit", interval: "60s", status: "ACTIVE" },
+    { id: "api-3", name: "z/OS SMF Real-Time Stream", type: "Legacy Push", endpoint: "10.200.4.6:3090/api/smf", interval: "Real-time", status: "ACTIVE" }
+  ]);
+
+  // Ingestion Pipeline Routing rules (Cribl-style Vector Engine - $0 License)
   const [routingRules, setRoutingRules] = useState([
     { id: "rule-1", name: "Drop Debug Logs", desc: "Filters out dev/debug syslog levels to prevent tool overload", action: "DROP", matches: "log_level == 'DEBUG'", enabled: true },
     { id: "rule-2", name: "Route Raw Logs to clickhouse.unstructured_raw", desc: "Pipes all original, unaltered telemetry directly to raw cold marts", action: "ROUTE", matches: "data_type == 'RAW_SYSLOG'", enabled: true },
@@ -18,20 +25,19 @@ export default function Lakehouse() {
     { id: "rule-4", name: "Forward Security Logons to postgres.windows_logs", desc: "Filters and routes active security logs to core Sentinel engines", action: "FORWARD", matches: "event_id == 4624", enabled: true }
   ]);
 
-  // Inbound API Sources (Legacy & On-Prem)
-  const [inboundAPIs, setInboundAPIs] = useState([
-    { id: "api-1", name: "IBM AS/400 QAUDJRN Feed", type: "Legacy Pull", endpoint: "10.200.4.5:9450/api/journal", interval: "30s", status: "ACTIVE" },
-    { id: "api-2", name: "On-Prem Oracle Audit Log", type: "DB Poller", endpoint: "jdbc:oracle:thin:@10.100.22.4:1521/audit", interval: "60s", status: "ACTIVE" },
-    { id: "api-3", name: "z/OS SMF Real-Time Stream", type: "Legacy Push", endpoint: "10.200.4.6:3090/api/smf", interval: "Real-time", status: "ACTIVE" }
+  // Data Jurisdiction & Regional Residency state
+  const [jurisdictions, setJurisdictions] = useState([
+    { id: "jur-1", region: "European Union (EU)", code: "EU_WEST_1", volume: "42.1 TB", complianceRule: "Store logs on EU partition tables. Prohibit cross-border copy.", status: "COMPLIANT" },
+    { id: "jur-2", region: "United States (US)", code: "US_EAST_2", volume: "31.8 TB", complianceRule: "Archive to Parquet Parquet after 90 days. AES-256 GCM enforce.", status: "COMPLIANT" },
+    { id: "jur-3", region: "Asia-Pacific (APAC)", code: "AP_SOUTH_1", volume: "12.5 TB", complianceRule: "Retain local audit access key traces.", status: "COMPLIANT" }
   ]);
 
-  const [newRuleName, setNewRuleName] = useState("");
-  const [newRuleMatch, setNewRuleMatch] = useState("");
-  const [newRuleAction, setNewRuleAction] = useState("FORWARD");
+  const [migrationSource, setMigrationSource] = useState("US_EAST_2");
+  const [migrationDest, setMigrationDest] = useState("EU_WEST_1");
+  const [isMigrating, setIsMigrating] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      // Simulate traffic optimization
       setIngestionRate(prev => Math.floor(prev + (Math.random() * 400 - 200)));
       setRoutedRate(prev => Math.floor(prev + (Math.random() * 200 - 100)));
       setStorageUsed(prev => +(prev + 0.01).toFixed(2));
@@ -43,28 +49,18 @@ export default function Lakehouse() {
     setRoutingRules(prev => prev.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r));
   };
 
-  const handleAddRule = () => {
-    if (!newRuleName || !newRuleMatch) {
-      alert("Please fill in the rule name and matching condition!");
+  const handleTriggerMigration = () => {
+    if (migrationSource === migrationDest) {
+      alert("Source and Destination regions must be different!");
       return;
     }
-
-    const newRule = {
-      id: `rule-${Date.now()}`,
-      name: newRuleName,
-      desc: "User defined custom pipeline filter rule",
-      action: newRuleAction,
-      matches: newRuleMatch,
-      enabled: true
-    };
-
-    setRoutingRules(prev => [...prev, newRule]);
-    setNewRuleName("");
-    setNewRuleMatch("");
-    alert(`Dynamic pipeline rule '${newRuleName}' has been added and hot-reloaded into Cribl routing engine.`);
+    setIsMigrating(true);
+    setTimeout(() => {
+      setIsMigrating(false);
+      alert(`Data migration completed! Relocated matching telemetry partitions from ${migrationSource} to ${migrationDest} in accordance with data sovereignty rules.`);
+    }, 2000);
   };
 
-  // Detailed schemas and fields for the 8 specific data sources
   const schemas = {
     unstructured: {
       name: "Unstructured & Raw Logs",
@@ -76,7 +72,8 @@ export default function Lakehouse() {
         { name: "timestamp", type: "DateTime", desc: "Ingestion time" },
         { name: "source_ip", type: "String", desc: "Origin host IP" },
         { name: "data_type", type: "Enum('CHAT', 'EMAIL', 'IMAGE', 'RAW_SYSLOG')", desc: "Type of unstructured payload" },
-        { name: "raw_content", type: "String", desc: "Unstructured payload text" }
+        { name: "raw_content", type: "String", desc: "Unstructured payload text" },
+        { name: "jurisdiction_region", type: "String", desc: "Sovereign location code (e.g. EU_WEST_1)" }
       ]
     },
     windows: {
@@ -175,14 +172,14 @@ export default function Lakehouse() {
 
   const mockRows = {
     unstructured: [
-      { timestamp: "11:33:02", source_ip: "10.100.12.45", data_type: "EMAIL", raw_content: "Subject: Security Alert Alert - phishing reported on node 'BOS-01'" },
-      { timestamp: "11:33:10", source_ip: "10.100.14.78", data_type: "CHAT", raw_content: "Slack: #incident-response: vm containment executed by orchestrator" }
+      { timestamp: "11:33:02", source_ip: "10.100.12.45", data_type: "EMAIL", raw_content: "Subject: Security Alert - phishing reported", jurisdiction_region: "EU_WEST_1" },
+      { timestamp: "11:33:10", source_ip: "10.100.14.78", data_type: "CHAT", raw_content: "Slack: vm containment executed", jurisdiction_region: "US_EAST_2" }
     ],
     windows: [
       { timestamp: "11:28:05", event_id: 4624, hostname: "boston-ws-01", user_principal: "sridhargs@spinovation.com" }
     ],
     linux: [
-      { timestamp: "11:28:07", pid: 902, process: "sshd", message: "Accepted publickey for admin from 10.100.1.10" }
+      { timestamp: "11:28:07", pid: 902, process: "sshd", message: "Accepted publickey for admin" }
     ],
     legacy: [
       { timestamp: "11:28:01", job_id: "JOB09281", user_id: "IBMUSER1", action: "SELECT * FROM db2.customer_ledger" }
@@ -223,11 +220,11 @@ export default function Lakehouse() {
           Unified Ingestion Lakehouse
         </h1>
         <p className="text-slate-500 text-sm mt-1">
-          Real-time log database and routing pipeline. Manage raw data ingestion (including legacy/on-prem API endpoints) and configure Cribl-style filter pipelines to route only what you need.
+          Open-source, zero-cost ingestion pipeline built on **Vector (Rust)** and **Redpanda Community Edition** ($0 license fee). Manage dynamic log routing and enforce regional data residency.
         </p>
       </div>
 
-      {/* Ingestion & Retention Overview KPIs with Inbound/Outbound Optimizations */}
+      {/* Ingestion & Retention Overview KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="glass-panel p-5 border border-slate-200 bg-white">
           <span className="text-[10px] font-mono text-slate-400 block font-bold uppercase">Raw Inbound Ingestion</span>
@@ -255,7 +252,6 @@ export default function Lakehouse() {
             <span className="text-2xl font-extrabold text-slate-900">{storageUsed.toFixed(2)}</span>
             <span className="text-xs font-mono text-slate-500 font-bold">GB</span>
           </div>
-          <span className="text-[10px] text-slate-400 block mt-1">Raw archive logs included</span>
         </div>
 
         <div className="glass-panel p-5 border border-slate-200 bg-white">
@@ -264,26 +260,24 @@ export default function Lakehouse() {
             <span className="text-2xl font-extrabold text-slate-900">{retentionDays}</span>
             <span className="text-xs font-mono text-slate-500 font-bold">Days</span>
           </div>
-          <span className="text-[10px] text-slate-400 block mt-1">Automatic rollover</span>
         </div>
       </div>
 
-      {/* NEW: Cribl-style Ingestion Pipeline & Legacy/On-Prem APIs */}
+      {/* Dynamic Data Routing & Location Jurisdiction Map */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Cribl Pipeline Router */}
+        {/* Vector Routing Rules */}
         <div className="lg:col-span-2 glass-panel p-6 border border-slate-200 bg-white space-y-4">
           <div className="flex justify-between items-center border-b border-slate-100 pb-3">
             <div>
-              <h3 className="text-base font-bold text-slate-800">Cribl Log Stream Router Pipeline</h3>
-              <p className="text-xs text-slate-400">Apply filter rules to drop redundant debug noise or route raw data to clickhouse.unstructured_raw.</p>
+              <h3 className="text-base font-bold text-slate-800">Vector Log Routing Pipeline</h3>
+              <p className="text-xs text-slate-400">Apply filter rules to drop redundant noise or route raw data to clickhouse.unstructured_raw.</p>
             </div>
             <span className="text-[9px] font-mono text-violet-600 bg-violet-50 border border-violet-200 px-2 py-0.5 rounded font-bold uppercase">
-              Compliance-Filtering
+              $0 License Fee
             </span>
           </div>
 
-          {/* Rules List */}
           <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
             {routingRules.map((rule) => (
               <div 
@@ -315,68 +309,65 @@ export default function Lakehouse() {
               </div>
             ))}
           </div>
-
-          {/* Add custom rule form */}
-          <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs">
-            <div className="space-y-1">
-              <label className="text-slate-500 block text-[9px] uppercase font-bold">Rule Name</label>
-              <input 
-                type="text" 
-                placeholder="e.g. Drop Info Logs"
-                value={newRuleName}
-                onChange={(e) => setNewRuleName(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded p-1.5 focus:outline-none"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-slate-500 block text-[9px] uppercase font-bold">Matching Condition</label>
-              <input 
-                type="text" 
-                placeholder="e.g. log_level == 'INFO'"
-                value={newRuleMatch}
-                onChange={(e) => setNewRuleMatch(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded p-1.5 focus:outline-none"
-              />
-            </div>
-            <div className="space-y-1 flex flex-col justify-between">
-              <label className="text-slate-500 block text-[9px] uppercase font-bold">Action</label>
-              <div className="flex gap-2">
-                <select 
-                  value={newRuleAction}
-                  onChange={(e) => setNewRuleAction(e.target.value)}
-                  className="bg-white border border-slate-200 rounded p-1.5 text-slate-700 flex-1"
-                >
-                  <option value="DROP">DROP</option>
-                  <option value="ROUTE">ROUTE RAW</option>
-                  <option value="FORWARD">FORWARD</option>
-                </select>
-                <button
-                  onClick={handleAddRule}
-                  className="px-3 bg-violet-600 hover:bg-violet-700 text-white rounded font-bold"
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Inbound API connections info */}
-        <div className="lg:col-span-1 glass-panel p-6 border border-slate-200 bg-white space-y-4">
-          <h3 className="text-base font-bold text-slate-800 border-b border-slate-100 pb-3">Legacy & On-Prem Ingestion APIs</h3>
-          <div className="space-y-3 font-mono text-xs">
-            {inboundAPIs.map((api) => (
-              <div key={api.id} className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-1">
-                <div className="flex justify-between items-center">
-                  <span className="font-bold text-slate-855">{api.name}</span>
-                  <span className="text-[8px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
-                    {api.status}
-                  </span>
+        {/* Data Jurisdiction & Residency Rules */}
+        <div className="lg:col-span-1 glass-panel p-6 border border-slate-200 bg-white space-y-4 flex flex-col justify-between">
+          <div>
+            <h3 className="text-base font-bold text-slate-800 border-b border-slate-100 pb-3">Data Sovereignty & Jurisdictions</h3>
+            <div className="space-y-3 font-mono text-xs mt-2">
+              {jurisdictions.map((jur) => (
+                <div key={jur.id} className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-slate-855">{jur.region}</span>
+                    <span className="text-[9px] text-cyan-650 text-cyan-600 bg-cyan-50 px-1.5 py-0.2 rounded font-bold">{jur.code}</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 leading-normal font-sans">{jur.complianceRule}</p>
+                  <div className="text-[10px] flex justify-between font-bold text-slate-650 pt-1 border-t border-slate-200/50 mt-1.5">
+                    <span>Volume: {jur.volume}</span>
+                    <span className="text-emerald-600">● {jur.status}</span>
+                  </div>
                 </div>
-                <div className="text-[10px] text-slate-400">{api.type} &bull; Interval: {api.interval}</div>
-                <code className="text-[9px] text-cyan-700 block truncate">{api.endpoint}</code>
+              ))}
+            </div>
+          </div>
+
+          {/* Migration tool */}
+          <div className="pt-4 border-t border-slate-200 space-y-3 font-mono text-xs">
+            <span className="text-slate-400 block text-[9px] uppercase font-bold">Compliance Data Migration</span>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[9px] text-slate-400">Source</label>
+                <select 
+                  value={migrationSource}
+                  onChange={(e) => setMigrationSource(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded p-1.5"
+                >
+                  <option value="US_EAST_2">US_EAST_2</option>
+                  <option value="EU_WEST_1">EU_WEST_1</option>
+                  <option value="AP_SOUTH_1">AP_SOUTH_1</option>
+                </select>
               </div>
-            ))}
+              <div>
+                <label className="text-[9px] text-slate-400">Destination</label>
+                <select 
+                  value={migrationDest}
+                  onChange={(e) => setMigrationDest(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded p-1.5"
+                >
+                  <option value="EU_WEST_1">EU_WEST_1</option>
+                  <option value="US_EAST_2">US_EAST_2</option>
+                  <option value="AP_SOUTH_1">AP_SOUTH_1</option>
+                </select>
+              </div>
+            </div>
+            <button
+              onClick={handleTriggerMigration}
+              disabled={isMigrating}
+              className="w-full py-2 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded uppercase tracking-wider text-[10px] text-center"
+            >
+              {isMigrating ? "Relocating telemetry partitions..." : "Migrate Jurisdictional Data"}
+            </button>
           </div>
         </div>
 
