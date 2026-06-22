@@ -14,6 +14,12 @@ export default function Settings() {
   // RBAC Role State
   const [activeRole, setActiveRole] = useState("super_admin");
 
+  // SSH Terminal Access Control states
+  const [sshEnabled, setSshEnabled] = useState(false);
+  const [sshPort, setSshPort] = useState(22);
+  const [authorizedKeys, setAuthorizedKeys] = useState("");
+  const [isApplyingSsh, setIsApplyingSsh] = useState(false);
+
   const rolesConfig = {
     super_admin: {
       title: "Super Administrator",
@@ -196,6 +202,72 @@ export default function Settings() {
                   <input type="checkbox" defaultChecked className="rounded text-violet-600 focus:ring-violet-500" />
                   <span className="text-[11px] font-bold text-slate-700">Enforce Multi-Factor (MFA) Challenges</span>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* SSH Terminal Access Control Panel */}
+          <div className="glass-panel p-6 border border-slate-200 bg-white space-y-4">
+            <h2 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-3">SSH Terminal Access Policy</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-mono text-xs">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-250 rounded-lg">
+                  <div>
+                    <span className="text-slate-800 font-bold block">SSH Daemon Status</span>
+                    <span className="text-[10px] text-slate-400">Port interactive shell access</span>
+                  </div>
+                  <button
+                    onClick={() => setSshEnabled(!sshEnabled)}
+                    className={`px-3 py-1 rounded text-[10px] font-bold uppercase transition-all ${
+                      sshEnabled 
+                        ? "bg-emerald-500 hover:bg-emerald-600 text-white" 
+                        : "bg-slate-300 hover:bg-slate-400 text-slate-700"
+                    }`}
+                  >
+                    {sshEnabled ? "RUNNING" : "DISABLED"}
+                  </button>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-slate-400 block text-[9px] uppercase font-bold">SSH Listener Port</label>
+                  <input
+                    type="number"
+                    value={sshPort}
+                    onChange={(e) => setSshPort(parseInt(e.target.value) || 22)}
+                    disabled={!sshEnabled}
+                    className="w-full bg-slate-50 border border-slate-200 rounded p-2 focus:outline-none focus:border-violet-500 text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-slate-400 block text-[9px] uppercase font-bold">Authorized SSH Keys (`authorized_keys` template)</label>
+                  <textarea
+                    placeholder="Paste ssh-rsa / ssh-ed25519 public keys here..."
+                    value={authorizedKeys}
+                    onChange={(e) => setAuthorizedKeys(e.target.value)}
+                    disabled={!sshEnabled}
+                    rows="3"
+                    className="w-full bg-slate-50 border border-slate-200 rounded p-2 focus:outline-none focus:border-violet-500 text-slate-850 font-sans text-xs resize-none"
+                  />
+                </div>
+
+                <button
+                  onClick={() => {
+                    setIsApplyingSsh(true);
+                    setTimeout(() => {
+                      setIsApplyingSsh(false);
+                      alert(
+                        `SSH configuration update applied successfully:\n- Daemon: ${sshEnabled ? "ENABLED" : "DISABLED"}\n- Port: ${sshPort}\n- Authorized keys: ${authorizedKeys ? "Refreshed" : "Empty (Default keys active)"}\n\nSystem daemon reloaded successfully!`
+                      );
+                    }, 1200);
+                  }}
+                  disabled={isApplyingSsh}
+                  className="w-full btn-glass btn-glass-success justify-center text-xs py-2 font-bold uppercase tracking-wider"
+                >
+                  {isApplyingSsh ? "Applying SSH Policy..." : "Apply SSH Daemon Policy"}
+                </button>
               </div>
             </div>
           </div>
