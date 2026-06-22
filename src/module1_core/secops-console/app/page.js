@@ -9,6 +9,35 @@ export default function Dashboard() {
   const [playbookLogs, setPlaybookLogs] = useState([]);
   const [isExecuting, setIsExecuting] = useState(false);
 
+  // Use Case Wizard states
+  const [mitreCount, setMitreCount] = useState(24);
+  const [priorityFilter, setPriorityFilter] = useState("HIGH");
+  const [selectedCategory, setSelectedCategory] = useState("Account Misuse / Compromise");
+  const [selectedUseCases, setSelectedUseCases] = useState([]);
+  const [selectedLogs, setSelectedLogs] = useState([]);
+
+  // Data Sources Ingestion Status Mapping (simulating connected APIs)
+  const [dataSourcesState] = useState({
+    active_directory: { name: "Active Directory", status: "ONLINE", logs: ["Event 4624 (Logon)", "Event 4625 (Logon Fail)", "Event 4768 (TGT)", "Event 4771 (Pre-auth Fail)"] },
+    aws_cloud: { name: "AWS CloudTrail", status: "ONLINE", logs: ["AssumeRole Events", "CreateUser Events", "ConsoleLogin Events"] },
+    firewall: { name: "Next-Gen Firewall", status: "ONLINE", logs: ["Session Block Logs", "Packet Bandwidth Spikes", "Port Scan Events"] },
+    edr_antivirus: { name: "EDR & Antivirus", status: "ONLINE", logs: ["Process Creation logs", "DLL Injection alerts", "File Quarantine events"] },
+    gcp_cloud: { name: "GCP Pub/Sub Audits", status: "OFFLINE", logs: ["Admin Activity Logs", "Storage bucket Access logs"] },
+    email_gateway: { name: "Email Secure Gateway", status: "OFFLINE", logs: ["SMTP Header Logs", "DMARC/SPF Failures", "Spam Alert logs"] }
+  });
+
+  // Use cases inventory list mapped from sheet
+  const useCaseList = [
+    { id: "UC-SEC-01", name: "Brute Force Attack on Active Directory", category: "Account Misuse / Compromise", priority: "HIGH", mitre: "T1110", sourceKey: "active_directory" },
+    { id: "UC-SEC-02", name: "Google Initiated Review - Access from rare geolocation", category: "Account Misuse / Compromise", priority: "HIGH", mitre: "T1078", sourceKey: "gcp_cloud" },
+    { id: "UC-SEC-03", name: "Activity from a Rare Country - Admin Accounts", category: "Account Misuse / Compromise", priority: "HIGH", mitre: "T1078", sourceKey: "active_directory" },
+    { id: "UC-SEC-04", name: "Rare account performing admin activity", category: "Privilege misuse", priority: "MEDIUM", mitre: "T1078", sourceKey: "active_directory" },
+    { id: "UC-SEC-05", name: "Rare privilege escalation through IAM instance profile", category: "Privilege misuse", priority: "MEDIUM", mitre: "T1548", sourceKey: "aws_cloud" },
+    { id: "UC-SEC-06", name: "Potential Phishing URL received over email", category: "Phishing", priority: "MEDIUM", mitre: "T1566", sourceKey: "email_gateway" },
+    { id: "UC-SEC-07", name: "Possible external host enumeration over ports", category: "Network", priority: "LOW", mitre: "T1046", sourceKey: "firewall" },
+    { id: "UC-SEC-08", name: "Host with a recurring malware infection", category: "Malware", priority: "HIGH", mitre: "T1204", sourceKey: "edr_antivirus" }
+  ];
+
   // Alerts array populated with MITRE tags and syslog context
   const [alerts, setAlerts] = useState([
     {
@@ -114,7 +143,7 @@ export default function Dashboard() {
       </div>
 
       {/* MS Sentinel style KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
         <div className="enterprise-panel p-5">
           <span className="text-[10px] font-bold font-mono text-slate-500 uppercase tracking-wider block">Ingestion Rate</span>
           <div className="flex justify-between items-end mt-2">
@@ -167,6 +196,17 @@ export default function Dashboard() {
           </div>
           <div className="w-full bg-slate-200 h-1 rounded overflow-hidden mt-3">
             <div className="bg-indigo-500 h-full w-[100%]"></div>
+          </div>
+        </div>
+
+        <div className="enterprise-panel p-5 border border-violet-200 bg-violet-50/10">
+          <span className="text-[10px] font-bold font-mono text-violet-600 uppercase tracking-wider block">MITRE ATT&CK Deployed</span>
+          <div className="flex justify-between items-end mt-2">
+            <span className="text-2xl font-extrabold font-mono text-violet-850 text-violet-700">{mitreCount} <span className="text-[10px] font-normal text-slate-500">/ 410</span></span>
+            <span className="text-[9px] font-mono text-violet-600 font-bold bg-violet-50 border border-violet-200 px-1 rounded">Active</span>
+          </div>
+          <div className="w-full bg-slate-200 h-1 rounded overflow-hidden mt-3">
+            <div className="bg-violet-600 h-full" style={{ width: `${Math.round((mitreCount / 410) * 100)}%` }}></div>
           </div>
         </div>
       </div>
@@ -278,6 +318,177 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+      {/* Use Case Deployment & Ingestion Enabler Console */}
+      <div className="enterprise-panel space-y-6">
+        <div>
+          <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider font-mono">Use Case Deployment & Ingestion Enabler</h2>
+          <p className="text-[11px] text-slate-500 mt-0.5">Activate threat detection policies, review required logs streams, and verify API data ingestion status.</p>
+        </div>
+
+        {/* Priority Filter and Category Selection */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 font-mono text-xs">
+          
+          {/* Priority and Category Select Column */}
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded space-y-4">
+            <div>
+              <label className="text-[10px] text-slate-400 block uppercase font-bold mb-2">1. Select Policy Priority Level</label>
+              <div className="flex gap-2">
+                {["HIGH", "MEDIUM", "LOW"].map((level) => (
+                  <button
+                    key={level}
+                    onClick={() => {
+                      setPriorityFilter(level);
+                      setSelectedUseCases([]);
+                      setSelectedLogs([]);
+                    }}
+                    className={`flex-1 py-1.5 rounded text-[10px] font-bold border transition-all ${
+                      priorityFilter === level
+                        ? "bg-violet-600 border-violet-600 text-white"
+                        : "bg-white border-slate-200 text-slate-600 hover:border-violet-400"
+                    }`}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1.5">2. Threat Category</label>
+              <select
+                value={selectedCategory}
+                onChange={(e) => {
+                  setSelectedCategory(e.target.value);
+                  setSelectedUseCases([]);
+                  setSelectedLogs([]);
+                }}
+                className="w-full bg-white border border-slate-200 rounded p-2 focus:outline-none focus:border-violet-500 font-sans text-xs"
+              >
+                {Array.from(new Set(useCaseList.map(u => u.category))).map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Use Case Selection Checklist */}
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded space-y-3">
+            <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1.5">3. Select Use Cases</label>
+            <div className="space-y-2 max-h-[140px] overflow-y-auto bg-white p-3 border border-slate-200 rounded font-sans">
+              {useCaseList
+                .filter(u => u.priority === priorityFilter && u.category === selectedCategory)
+                .map((u) => (
+                  <label key={u.id} className="flex items-start gap-2.5 p-1 hover:bg-slate-50 rounded cursor-pointer text-xs">
+                    <input
+                      type="checkbox"
+                      checked={selectedUseCases.includes(u.name)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedUseCases(prev => [...prev, u.name]);
+                        } else {
+                          setSelectedUseCases(prev => prev.filter(item => item !== u.name));
+                        }
+                      }}
+                      className="rounded border-slate-300 text-violet-600 focus:ring-violet-500 mt-0.5"
+                    />
+                    <div>
+                      <span className="text-slate-800 font-medium block leading-tight">{u.name}</span>
+                      <span className="text-[9px] font-mono text-slate-400 bg-slate-100 px-1 py-0.2 rounded mt-1 inline-block">MITRE: {u.mitre}</span>
+                    </div>
+                  </label>
+                ))}
+              {useCaseList.filter(u => u.priority === priorityFilter && u.category === selectedCategory).length === 0 && (
+                <div className="text-slate-400 text-xs text-center py-4 font-sans">No use cases matching criteria.</div>
+              )}
+            </div>
+          </div>
+
+          {/* Ingestion Check & Log Selection */}
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded flex flex-col justify-between">
+            {selectedUseCases.length > 0 ? (() => {
+              // Get the source key of the first selected usecase
+              const selectedUc = useCaseList.find(u => u.name === selectedUseCases[0]);
+              const source = dataSourcesState[selectedUc?.sourceKey];
+              const isOnline = source?.status === "ONLINE";
+
+              return (
+                <div className="space-y-3 flex-1 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[9px] uppercase font-bold text-slate-400">4. Ingestion Status</span>
+                      <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded border ${
+                        isOnline 
+                          ? "bg-emerald-50 text-emerald-600 border-emerald-200 animate-pulse" 
+                          : "bg-rose-50 text-rose-600 border-rose-200"
+                      }`}>
+                        {isOnline ? "🟢 ONLINE" : "🔴 OFFLINE"}
+                      </span>
+                    </div>
+                    
+                    {isOnline ? (
+                      <div className="space-y-2">
+                        <span className="text-[10px] text-slate-500 font-sans block leading-normal">
+                          Ingesting data from **{source.name}**. Select active logs to monitor:
+                        </span>
+                        <div className="space-y-1 bg-white p-2 border border-slate-200 rounded font-sans text-xs">
+                          {source.logs.map((log) => (
+                            <label key={log} className="flex items-center gap-2 cursor-pointer py-0.5">
+                              <input
+                                type="checkbox"
+                                checked={selectedLogs.includes(log)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedLogs(prev => [...prev, log]);
+                                  } else {
+                                    setSelectedLogs(prev => prev.filter(l => l !== log));
+                                  }
+                                }}
+                                className="rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                              />
+                              <span className="text-slate-700">{log}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 bg-white p-3 border border-rose-200 rounded text-slate-600">
+                        <p className="text-[10px] font-sans leading-normal">
+                          ⚠️ Data feed **{source.name}** is not connected. API access keys are required to establish connection.
+                        </p>
+                        <a
+                          href="/integrations"
+                          className="inline-block text-[9px] font-bold font-mono text-white bg-rose-600 hover:bg-rose-700 px-2.5 py-1 rounded transition-all mt-1 uppercase"
+                        >
+                          Go to Lakehouse API Integrations
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                  {isOnline && (
+                    <button
+                      onClick={() => {
+                        setMitreCount(prev => prev + selectedUseCases.length);
+                        alert(`Success! Successfully deployed usecase(s):\n${selectedUseCases.join("\n")}\n\nIngestion rule mappings registered in Vector & ClickHouse.`);
+                        setSelectedUseCases([]);
+                        setSelectedLogs([]);
+                      }}
+                      className="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold p-2 rounded uppercase tracking-wider text-[10px] text-center"
+                    >
+                      🚀 Deploy Active Use Cases
+                    </button>
+                  )}
+                </div>
+              );
+            })() : (
+              <div className="text-slate-400 text-[10px] flex items-center justify-center text-center h-full font-sans">
+                Select a use case to verify ingestion pipeline status.
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
 

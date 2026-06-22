@@ -31,7 +31,7 @@ export default function RootLayout({ children }) {
       ]
     },
     {
-      title: "Analytics & Data Lake",
+      title: "Lakehouse",
       items: [
         { name: "Core API Integrations", path: "/integrations", icon: "integrations" },
         { name: "Unified Lakehouse", path: "/lakehouse", icon: "lakehouse" },
